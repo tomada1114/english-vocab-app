@@ -316,6 +316,67 @@ describe("POST /api/sessions/[id]/reviews", () => {
     });
   });
 
+  it("refuses a path whose session segment is not a number", async () => {
+    const store = storeWithSession();
+    const handler = createRecordReviewHandler(dependenciesOver(store));
+
+    const response = await handler(
+      postTo("http://localhost/api/sessions/one/reviews", {
+        cardId: MITIGATE.id,
+        rating: 3,
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    expect((await bodyOf(response))["error"]).toMatchObject({
+      code: "ERR_SESSION_NOT_FOUND",
+    });
+  });
+
+  it("reads the same session id through a trailing slash", async () => {
+    const store = storeWithSession();
+    const handler = createRecordReviewHandler(dependenciesOver(store));
+
+    const response = await handler(
+      postTo("http://localhost/api/sessions/1/reviews/", {
+        cardId: MITIGATE.id,
+        rating: 3,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(store.listReviewLogs()).toHaveLength(1);
+  });
+
+  // A phase outside FSRS's four is a row no version of this app writes; what
+  // it must not do is end the session it appears in.
+  it("rates a card whose stored phase is not one FSRS knows, as a new card", async () => {
+    const store = storeWithSession();
+    store.recordReview({
+      sessionId: 1,
+      cardId: MITIGATE.id,
+      rating: 3,
+      reviewedAt: NOW - DAY_MS,
+      before: { state: 0, due: NOW - DAY_MS, stability: 0, difficulty: 0 },
+      after: {
+        state: 7,
+        due: NOW - DAY_MS,
+        stability: 4.5,
+        difficulty: 5,
+        scheduledDays: 1,
+        learningSteps: 0,
+        reps: 1,
+        lapses: 0,
+        lastReview: NOW - DAY_MS,
+      },
+    });
+
+    const response = await review(store, 1, { cardId: MITIGATE.id, rating: 3 });
+
+    expect(response.status).toBe(200);
+    expect(store.listReviewLogs()[1]?.before.state).toBe(0);
+  });
+
   it("writes nothing when the rating is refused", async () => {
     const store = storeWithSession();
 
