@@ -295,12 +295,9 @@ const MESSAGE_KEYS = [
   "Metadata.description",
   "HomePage.title",
   "HomePage.intro",
-  "HomePage.localeCount",
   "NotFound.title",
   "NotFound.description",
   "NotFound.homeLink",
-  "LocaleSwitcher.label",
-  "LocaleSwitcher.en",
 ] as const satisfies readonly MessageKey[];
 
 describe("the message catalogs", () => {

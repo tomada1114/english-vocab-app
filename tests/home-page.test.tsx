@@ -48,7 +48,7 @@ describe("HomePage", () => {
       screen.getByRole("heading", { name: en.HomePage.title }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("The App Router skeleton renders in English."),
+      screen.getByText("Your vocabulary deck and review progress will appear here."),
     ).toBeInTheDocument();
   });
 

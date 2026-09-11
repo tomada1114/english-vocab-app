@@ -28,13 +28,11 @@ export default function HomePage({
   setRequestLocale(locale);
 
   const t = useTranslations("HomePage");
-  const switcher = useTranslations("LocaleSwitcher");
 
   return (
     <main>
       <h1>{t("title")}</h1>
-      <p>{t("intro", { language: switcher(locale) })}</p>
-      <p>{t("localeCount", { count: LOCALES.length })}</p>
+      <p>{t("intro")}</p>
     </main>
   );
 }
