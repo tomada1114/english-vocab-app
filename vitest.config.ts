@@ -27,6 +27,11 @@ const automationTests = [
   "tests/check-staged.test.ts",
   "tests/ci-sync.test.ts",
   "tests/clean.test.ts",
+  // Opens real SQLite files in a temp directory: WAL is a journal on disk, and
+  // "opening an already-migrated file applies nothing" needs a file that
+  // outlives the connection. Its `:memory:` half is tests/db-queries.test.ts,
+  // which touches nothing and stays a unit test.
+  "tests/db-connection.test.ts",
   "tests/git-env.test.ts",
   "tests/labels.test.ts",
   "tests/lefthook-partial-stage.test.ts",
