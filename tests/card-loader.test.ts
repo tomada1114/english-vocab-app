@@ -186,6 +186,16 @@ describe("loadLists when a list file is missing or malformed", () => {
     });
   });
 
+  it("throws for a missing purpose list beside a readable topic list", async () => {
+    const directory = temporaryDirectory();
+    writeFileSync(path.join(directory, "topics.json"), '["education"]');
+    const error = await rejection(loadLists(directory));
+    expect(error).toMatchObject({
+      code: "ERR_CARD_UNREADABLE",
+      file: path.join(directory, "purposes.json"),
+    });
+  });
+
   it("throws for a list file that is not JSON", async () => {
     const directory = listsWith("[not json", validPurposes);
     const error = await rejection(loadLists(directory));
