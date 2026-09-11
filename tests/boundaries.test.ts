@@ -305,6 +305,26 @@ describe("node:sqlite is reached from one directory only", () => {
   });
 });
 
+describe("ts-fsrs is reached from one module only", () => {
+  // The scheduling library is wrapped by `src/core/scheduler.ts`, which
+  // publishes plain numbers instead of ts-fsrs's own types, so replacing it is
+  // a bounded edit rather than a search across the tree. A second importer
+  // would also be a second `fsrs()` instance, free to carry different
+  // parameters from the one every rating goes through.
+  const module = "src/core/scheduler.ts";
+
+  /** Every module importing `ts-fsrs`, whatever the spelling. */
+  const importers = sourceModules
+    .filter((candidate) =>
+      candidate.specifiers.some((specifier) => importsPackage(specifier, "ts-fsrs")),
+    )
+    .map((candidate) => candidate.file);
+
+  it("is imported by nothing but the scheduler", () => {
+    expect(importers).toStrictEqual([module]);
+  });
+});
+
 describe("src/core/ is framework-free", () => {
   // The zone holds the vocabulary the other zones are written in. A framework
   // import here makes that vocabulary un-reusable and un-testable without the
