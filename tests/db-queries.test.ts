@@ -11,6 +11,7 @@ import type {
   SchedulingState,
   SessionEnd,
 } from "../src/server/db/records";
+import { withTransaction } from "../src/server/db/transaction";
 
 // Every case here runs against `:memory:`, so the suite touches no filesystem
 // and stays a unit test: what it asserts is the SQL and the row-to-record
@@ -188,6 +189,38 @@ describe("recordReview", () => {
 
     expect(store.getCardStates()).toStrictEqual([]);
     expect(store.listReviewLogs()).toStrictEqual([]);
+  });
+});
+
+describe("withTransaction", () => {
+  it("hands back what the work returned, once it has committed", () => {
+    const { database, store } = openStore();
+
+    const tally = withTransaction(database, () => {
+      store.setSetting("newCardsPerDay", 10);
+      return store.countFirstReviewsSince(0);
+    });
+
+    expect(tally).toBe(0);
+    expect(database.isTransaction).toBe(false);
+  });
+
+  // SQLite ends the transaction itself on some failures. Issuing a ROLLBACK
+  // with none open raises, which would replace the failure the caller needs to
+  // see with a confusing one about transaction state.
+  it("skips the rollback when the failure already ended the transaction", () => {
+    const { database } = openStore();
+    const failure = new Error("the work raised after the transaction ended");
+
+    const error = thrown(() =>
+      withTransaction(database, () => {
+        database.exec("ROLLBACK");
+        throw failure;
+      }),
+    );
+
+    expect(error).toBe(failure);
+    expect(database.isTransaction).toBe(false);
   });
 });
 
