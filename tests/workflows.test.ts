@@ -2860,6 +2860,8 @@ describe("the workflows in .github/workflows", () => {
     expect(workflowNames).toEqual([
       "check-pr-title.yml",
       "ci.yml",
+      "claude-code-review.yml",
+      "claude.yml",
       "dependency-review.yml",
       "pr-label.yml",
       "security-audit.yml",
@@ -2915,14 +2917,19 @@ describe("the workflows in .github/workflows", () => {
 
   it("grants a write scope only where the job cannot do its work without one", () => {
     // pr-label writes a label and tolerates the read-only token a fork PR
-    // gets. Everything else, and in particular everything that runs
-    // repository code, stays read-only. This repository publishes nothing, so
-    // no workflow needs OIDC or a tag push any more.
+    // gets. The two Claude workflows request `id-token: write` only, which the
+    // action trades for a Claude GitHub App token to comment with; their
+    // GITHUB_TOKEN scopes stay read-only. Everything else, and in particular
+    // everything that runs repository code, stays read-only.
     const writers = workflowNames.filter((name) =>
       scan(workflowSource(name)).some((line) => line.text.endsWith(": write")),
     );
 
-    expect(writers.sort()).toEqual(["pr-label.yml"]);
+    expect(writers.sort()).toEqual([
+      "claude-code-review.yml",
+      "claude.yml",
+      "pr-label.yml",
+    ]);
   });
 });
 

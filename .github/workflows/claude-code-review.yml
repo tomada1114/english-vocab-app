@@ -1,0 +1,99 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    name: Claude Code review
+    # A fork or Dependabot pull request is not handed CLAUDE_CODE_OAUTH_TOKEN,
+    # so the action could only fail there. Skipped rather than left red.
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      # The action exchanges this OIDC token for a Claude GitHub App token,
+      # which is what posts the review comments; GITHUB_TOKEN stays read-only.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      # A prompt of our own rather than the code-review plugin: the plugin
+      # audits CLAUDE.md only, and the conventions a change is held to here live
+      # in the skill that owns it, which AGENTS.md's Skills table names.
+      - uses: anthropics/claude-code-action@0a8d3c9443bbff909ab973b6a17a340b913f229f # v1.0.221
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            HEAD SHA: ${{ github.event.pull_request.head.sha }}
+
+            Review this pull request. The pull request is already checked out in
+            the working directory; read its diff with `gh pr diff`, and its
+            title, description and earlier comments with `gh pr view --comments`.
+
+            1. Read AGENTS.md. It is the project guide every change is held to.
+            2. From the "Skills" table in AGENTS.md, pick every skill whose
+               subject covers a file this pull request changes, and read its
+               `.claude/skills/<name>/SKILL.md`, plus any file under that skill's
+               `references/` the SKILL.md points to for the kind of change made.
+            3. Read every earlier comment whose first line starts with
+               `<!-- claude-review-response`. It answers an earlier round of this
+               review, one line per finding: fixed, rejected with a reason, or
+               deferred to an issue. Do not raise a rejected or deferred finding
+               again, unless the stated reason is factually wrong about the code
+               — then raise it and say why the reason does not hold.
+            4. Look for a bug (code that will behave wrongly, fail, or break a
+               contract AGENTS.md names) or a violation of a rule stated in
+               AGENTS.md or in a skill picked in step 2 (quote the rule and name
+               its file). Give each finding exactly one severity:
+               - `must-fix`: the change is wrong — a bug, a broken contract, or
+                 a rule violation with a concrete consequence;
+               - `should-fix`: real and in the changed lines, but low risk
+                 today — a missing test for an edge the change introduced, a
+                 rule broken without breakage yet;
+               - `nit`: a suggestion — naming, simplification, a comment;
+               - `pre-existing`: a defect in lines this pull request does not
+                 touch, worth an issue of its own.
+            5. Before reporting a finding, confirm it against the code. Drop
+               anything you cannot confirm and anything formatting, ESLint, the
+               type checker or the test suite already catches.
+            6. Number every finding R1, R2, …, `pre-existing` ones included —
+               the number is how the author's reply refers back to it. Then post
+               each finding except `pre-existing` as an inline comment with
+               `mcp__github_inline_comment__create_inline_comment` (with
+               `confirmed: true`) on the changed line it concerns, starting with
+               `[<severity>] R<n>:`. A `pre-existing` finding appears only in the
+               summary below, still with its number.
+            7. Last, post exactly one top-level comment with `gh pr comment`,
+               even when there are no findings. Its first line must be exactly
+               this, with the four counts filled in:
+               <!-- claude-review v1 sha=${{ github.event.pull_request.head.sha }} must=<n> should=<n> nit=<n> pre=<n> -->
+               Then the skills you applied, then one line per finding in this
+               shape:
+               - [<severity>] R<n> `<path>:<line>` — <what is wrong> — <why it matters>
+               for example (an illustration, not a finding about this pull request):
+               - [should-fix] R2 `src/core/example.ts:12` — the empty-input branch this change adds has no test — a regression there would pass CI
+               or "No issues found." when there are none. The marker line is how
+               the reviewed commit is found, so copy it exactly. The finding
+               lines are read by another model, not parsed: give every one its
+               severity tag and its R number, and put anything else you want to
+               say in prose around them.
+
+            Write every comment in English.
+          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"'
