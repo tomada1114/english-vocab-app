@@ -77,9 +77,11 @@ cards without a merge conflict.
 
 ## The Lint
 
-Rules live in `src/core/cards/lint.ts` and thresholds in
-`src/core/cards/lint-config.ts`, the one place to change a number. The rules are ported
-from `tomada-routine`'s
+Rules live in `src/core/cards/lint.ts` and the `lint-*.ts` modules beside it — the
+per-file size budget in `eslint.config.mjs` is what splits them, with `lint.ts` holding
+the entry point and the rules that have to see the whole directory — and every threshold
+lives in `src/core/cards/lint-config.ts`, the one place to change a number. The rules
+are ported from `tomada-routine`'s
 `.claude/skills/anki-vocabulary/scripts/validate_phrase_cards.py` (and its `config.py`)
 without the `gloss_ja` rules: stemming, irregular verbs, placeholder words, echo
 fragments of at least 8 characters. `ERROR` fails; `WARN` is reported and passes.
@@ -105,10 +107,18 @@ fragments of at least 8 characters. `ERROR` fails; `WARN` is reported and passes
 | `W_EXAMPLE_PARTIAL_ANSWER` | WARN     | An example uses only some of a multi-word headword                   |
 | `W_EXAMPLE_LONGISH`        | WARN     | An example > 8 words. Drop this rule if it fires on most cards       |
 
+`E_SCHEMA` also covers what the zod schema cannot: a file the loader could not read as a
+card at all (unreadable, or not JSON), and a field holding only whitespace, which
+`min(1)` accepts as text.
+
 Judgment is not the Lint's job: whether the front has one answer, whether a paraphrase
 leaks it, whether an example is natural. That belongs to `reviewing-cards`.
 
-**Where it runs.** Unit tests drive the rules over fixtures in `tests/fixtures/cards/`.
+**Where it runs.** `src/server/card-lint.ts` is the one entry point that reads a
+directory: `lintDataDirectory(dataDirectory)` loads it through `src/server/cards.ts` and
+lints what came back. Unit tests drive the rules over cards built in
+`tests/card-lint.test.ts`, never over a fixture tree — `lintCards` takes cards, so a
+file between a rule and its case would only add a loader to debug.
 `tests/card-data.test.ts` (in the `automation` project) loads the real `data/` tree,
 fails on any ERROR and prints every WARN, so CI blocks a pull request that adds a bad
 card. `pnpm cards:lint` runs only that suite; the generating skill calls it. Card text

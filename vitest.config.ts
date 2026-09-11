@@ -23,6 +23,10 @@ const fixtures = "tests/fixtures/**";
 // cover.
 const automationTests = [
   "tests/boundaries.test.ts",
+  // Lints the committed `data/` tree off the real checkout, and writes temp
+  // directories for the failures a committed fixture cannot express. This is
+  // the suite `pnpm cards:lint` runs on its own.
+  "tests/card-data.test.ts",
   "tests/card-loader.test.ts",
   "tests/card-skills.test.ts",
   "tests/check-staged.test.ts",
