@@ -1,0 +1,96 @@
+# Single-package repository: no `packages:` globs on purpose.
+#
+# This file exists so the pnpm supply-chain policy below is declared in one
+# machine-readable place, reviewable in a diff, and applied to every install
+# (local, CI, and release) without relying on per-developer configuration.
+
+# Reproduce the pnpm version resolved in pnpm-lock.yaml when the local pnpm
+# does not satisfy devEngines.packageManager, instead of failing the install.
+pmOnFail: download
+
+# Refuse to run a script against a node_modules that no longer matches the
+# lockfile, instead of letting a gate pass against stale dependencies.
+verifyDepsBeforeRun: error
+
+# Supply-chain cooldown: refuse dependency versions published less than 7 days
+# (10080 minutes) ago, so a compromised or broken release has time to be found
+# before it can enter this project.
+minimumReleaseAge: 10080
+# Apply the cooldown to every version, including ones already in the lockfile.
+minimumReleaseAgeStrict: true
+# Fail closed when registry metadata has no publish time rather than assuming
+# the version is old enough.
+minimumReleaseAgeIgnoreMissingTime: false
+
+# Reject dependencies whose provenance / trusted-publisher level regressed
+# compared to a previously resolved version.
+trustPolicy: no-downgrade
+# Never trust the trust metadata recorded in a lockfile a contributor produced
+# under a weaker policy; re-verify against the registry.
+trustLockfile: false
+# Refuse transitive dependencies fetched from git or arbitrary tarball URLs.
+blockExoticSubdeps: true
+
+# Unmet or conflicting peer ranges are errors, not warnings.
+strictPeerDependencies: true
+# Fail the install when a dependency wants to run a lifecycle script that is
+# not explicitly allowed below.
+strictDepBuilds: true
+
+# Install-script allowlist. Every entry is a reviewed exception: adding one is
+# a security-sensitive change and needs the same scrutiny as a new dependency.
+allowBuilds:
+  # lefthook ships a postinstall that downloads/links its Go binary; that is
+  # the whole point of depending on it for Git hooks.
+  lefthook: true
+  # `false` is a decision, not an omission: `strictDepBuilds` fails the install
+  # on a lifecycle script nobody has ruled on, and these two arrive as
+  # dependencies of `next-intl`, which reaches them only from its message
+  # extractor -- a feature this repository does not turn on. Neither script is
+  # needed for the prebuilt binary each package ships as an optional
+  # platform-specific dependency: `@swc/core`'s postinstall only probes that
+  # binary and installs `@swc/wasm` as a fallback when it cannot load, and
+  # `@parcel/watcher`'s runs node-gyp only when no prebuild matched. Both would
+  # otherwise compile or fetch native code at install time for code this
+  # application never calls.
+  "@parcel/watcher": false
+  "@swc/core": false
+
+# Transitive-version overrides. Each entry names the single graph edge it
+# replaces (`parent>child`) rather than the package globally, so a future
+# dependency that needs a different version of either is not silently pinned
+# to this one. None of them relaxes the policy above.
+overrides:
+  # eslint-config-next depends on ^3.5.2. Its 3.9+ releases resolve through
+  # unrs-resolver, a native binary linked by a lifecycle script, which would
+  # need an allowBuilds entry above for a resolver no enabled rule ever loads.
+  # 3.8.7 is the newest release that still uses the pure-JS enhanced-resolve.
+  eslint-config-next>eslint-import-resolver-typescript: 3.8.7
+  # semver@6.3.1 carries no provenance while earlier-published semver releases
+  # do, so trustPolicy: no-downgrade refuses it. This one is deliberately
+  # global rather than one `parent>child` edge: semver@^6 is reached through
+  # eslint-plugin-react, eslint-plugin-import and @babel/core (under
+  # eslint-plugin-react-hooks) independently, so naming edges would be an
+  # incomplete list that a new transitive dependency silently reopens. semver 7
+  # answers the same range queries. Drop this once 6.3.1 regains provenance or
+  # nothing reaches for semver@6.
+  semver: ^7.7.4
+  # GHSA-2v37-7h3g-55p8: nanoid < 3.3.18 can loop indefinitely when a custom
+  # generator is called with size 0. next pins postcss, whose own nanoid range
+  # still resolves below the patched release, so `pnpm audit --prod` — the
+  # weekly security-audit workflow — fails on it. Scoped to the one edge that
+  # reaches it: nothing in this repository calls nanoid, and postcss is where
+  # Next's build toolchain does. Drop this once postcss ships a range that
+  # resolves past 3.3.18 on its own.
+  postcss>nanoid: ^3.3.18
+
+# Peer-range exceptions, one graph edge each. strictPeerDependencies above
+# stays on: these three plugins arrive only as dependencies of
+# eslint-config-next and still cap their declared eslint peer at 9, while this
+# repository runs eslint 10. Drop an entry as soon as its plugin publishes a
+# release naming eslint 10.
+peerDependencyRules:
+  allowedVersions:
+    eslint-plugin-import>eslint: "10"
+    eslint-plugin-jsx-a11y>eslint: "10"
+    eslint-plugin-react>eslint: "10"
