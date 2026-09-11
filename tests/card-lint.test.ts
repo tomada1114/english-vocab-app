@@ -292,6 +292,18 @@ describe("E_EXAMPLE_MISSING_ANSWER", () => {
     );
   });
 
+  it("accepts a doubled consonant, so `rubbed` uses `rub`", () => {
+    expect(rulesForExample("rub", "She rubbed the table clean.")).not.toContain(
+      "E_EXAMPLE_MISSING_ANSWER",
+    );
+  });
+
+  it("accepts a dropped `e`, so `joking` uses `joke`", () => {
+    expect(rulesForExample("joke", "He was joking about the delay.")).not.toContain(
+      "E_EXAMPLE_MISSING_ANSWER",
+    );
+  });
+
   it("is not satisfied by a prefix, so `over` does not use `oversee`", () => {
     expect(rulesForExample("oversee", "She watches over the whole team.")).toContain(
       "E_EXAMPLE_MISSING_ANSWER",

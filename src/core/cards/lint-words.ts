@@ -93,6 +93,9 @@ const IRREGULAR_GROUPS: readonly ReadonlySet<string>[] = [
 /** Endings stripped when looking for the form a word was built from. */
 const VARIANT_SUFFIXES = "ingly ing ies ied edly ed es s ly d e".split(" ");
 
+/** A doubled final consonant, which `rubbed` has once its `ed` is stripped. */
+const DOUBLED_CONSONANT = /([^aeiou])\1$/;
+
 /** A word, apostrophes kept so `one's` stays one token. */
 const WORDS = /[A-Za-z']+/g;
 
@@ -161,8 +164,7 @@ function wordVariants(word: string): Set<string> {
     }
   }
   for (const variant of [...variants]) {
-    const last = variant.at(-1) ?? "";
-    if (variant.length >= 3 && last === variant.at(-2) && !"aeiou".includes(last)) {
+    if (variant.length >= 3 && DOUBLED_CONSONANT.test(variant)) {
       variants.add(variant.slice(0, -1));
     }
     variants.add(`${variant}e`);
