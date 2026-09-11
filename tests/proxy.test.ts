@@ -78,10 +78,10 @@ describe("locale detection", () => {
     expect(redirectTarget(proxy(get("/")))).toBe(`/${DEFAULT_LOCALE}`);
   });
 
-  it("redirects to the locale the reader's browser asked for", () => {
+  it("falls back to the default locale for a language this app does not ship, ja included", () => {
     const target = redirectTarget(proxy(get("/", { "accept-language": "ja" })));
 
-    expect(target).toBe("/ja");
+    expect(target).toBe(`/${DEFAULT_LOCALE}`);
   });
 
   it("falls back to the default locale for a language this app does not ship", () => {

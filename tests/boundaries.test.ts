@@ -159,7 +159,6 @@ describe("the import scanner the zone assertions run on", () => {
         "next/navigation",
         "react",
         "../../i18n/locales",
-        "../../i18n/navigation",
       ],
     ],
   ])("reads %s as %p", (file, expected) => {

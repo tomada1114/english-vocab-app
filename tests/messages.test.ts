@@ -301,7 +301,6 @@ const MESSAGE_KEYS = [
   "NotFound.homeLink",
   "LocaleSwitcher.label",
   "LocaleSwitcher.en",
-  "LocaleSwitcher.ja",
 ] as const satisfies readonly MessageKey[];
 
 describe("the message catalogs", () => {
@@ -318,8 +317,9 @@ describe("the message catalogs", () => {
   });
 
   // MESSAGES is annotated Readonly<Record<Locale, Messages>>, and every
-  // catalog is assignable to Messages — so `{ en, ja: en }` type-checks and
-  // ships a copy-paste that serves English under /ja. This is also what keeps
+  // catalog is assignable to Messages — so a locale wired to the wrong
+  // catalog (a copy-paste that serves one locale's translation under
+  // another's key) type-checks anyway. This is also what keeps
   // MESSAGES a value import: `vitest related` only sees this suite depend on
   // messages/en.json through the value chain messages.test.ts ->
   // src/i18n/messages.ts -> messages/en.json, since every other case here

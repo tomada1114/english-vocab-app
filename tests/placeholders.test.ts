@@ -54,13 +54,14 @@ import { readText, repoRoot, walk } from "./repo-tree";
  * inventory rows self-fulfilling — they would still appear after a correct
  * rename, so the list could never empty.
  *
- * The home page's body copy — `HomePage.intro` and `HomePage.localeCount` in
- * each catalog — is deliberately absent. It is demo copy for a demo page a
- * project rewrites or deletes on day one, and `localizing-ui` quotes
- * `ja.json`'s `localeCount` as its worked example of plural categories, so a
- * needle for it would put inventory rows on a skill whose subject is ICU
- * plurals rather than this template's identity. `starting-an-app` sends a
- * renaming project to that copy by hand instead.
+ * The home page's body copy — `HomePage.intro` and `HomePage.localeCount` on
+ * a template that still carries it — is deliberately absent. It is demo copy
+ * for a demo page a project rewrites or deletes on day one, and
+ * `localizing-ui`'s ICU section carries its own `localeCount` example inline
+ * as a worked plural-category demo, so a needle for it would put inventory
+ * rows on a skill whose subject is ICU plurals rather than this template's
+ * identity. `starting-an-app` sends a renaming project to that copy by hand
+ * instead.
  */
 const PLACEHOLDERS = [
   "my-package",

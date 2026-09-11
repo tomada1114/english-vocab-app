@@ -28,11 +28,11 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("description"),
+    // No `languages` map: with one shipped locale there is no alternate
+    // version to point a reader or a crawler at, only this page pointing at
+    // itself. Re-add it alongside a second locale in `LOCALES`.
     alternates: {
       canonical: `/${locale}`,
-      languages: Object.fromEntries(
-        LOCALES.map((alternateLocale) => [alternateLocale, `/${alternateLocale}`]),
-      ),
     },
   };
 }

@@ -20,11 +20,10 @@ checked.
 
 ## Overview
 
-A template for a Next.js application on the App Router, written in ESM-only TypeScript:
-a locale-prefixed page tree, one JSON endpoint, and one language-model call behind a
-port that an adapter implements. It answers with a fake adapter out of the box, so
-`pnpm dev` works before any credential exists, and the whole AI layer is built to come
-out in one piece for a project that does not want one.
+A personal, local-only English vocabulary card app on the Next.js App Router, written in
+ESM-only TypeScript: a locale-prefixed page tree, built from a template whose
+language-model layer has already come out in one piece — this app runs no model at
+runtime.
 
 It is private: nothing here is packed, published, or consumed as a tarball, so there is
 no published `engines.node` floor — `.node-version` and `devEngines.runtime` carry the
@@ -301,15 +300,15 @@ while its declared task is something else.
 - All committed code, comments, configuration, and public documentation are in English.
   `authoring-skills` applies this to a skill's `description`. The one exception is
   `messages/*.json`: those are the UI message catalogs the application renders to a
-  reader, so `messages/ja.json` is Japanese by definition. The exception covers the
-  catalogs' string values and nothing else — their keys, and every comment, test, and
-  document about them, stay English. The one thing that may itself be non-English is a
-  literal whose exact bytes are what a check or a worked example exercises, where
-  writing it in English would destroy what it demonstrates —
-  `tests/placeholders.test.ts`'s `PLACEHOLDERS` is the case to compare against, for the
-  reason recorded there. Nothing wider: the prose around such a literal stays English —
-  a test's `describe` and `it` names, its assertion messages, its comments, and a
-  document's own sentences.
+  reader, so a non-English catalog added alongside `en.json` is non-English by
+  definition. The exception covers the catalogs' string values and nothing else — their
+  keys, and every comment, test, and document about them, stay English. The one thing
+  that may itself be non-English is a literal whose exact bytes are what a check or a
+  worked example exercises, where writing it in English would destroy what it
+  demonstrates — `tests/placeholders.test.ts`'s `PLACEHOLDERS` is the case to compare
+  against, for the reason recorded there. Nothing wider: the prose around such a literal
+  stays English — a test's `describe` and `it` names, its assertion messages, its
+  comments, and a document's own sentences.
 
 - **A comment carries only what the code cannot** — a non-obvious why, a trap the next
   edit would spring, an external constraint. Default to none and keep the rest to a line

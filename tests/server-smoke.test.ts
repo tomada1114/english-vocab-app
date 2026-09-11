@@ -383,7 +383,7 @@ describe("the built application, served by `next start`", () => {
   });
 
   it.each(LOCALES)(
-    "serves /%s as a document with localized metadata and language alternates",
+    "serves /%s as a document with localized metadata",
     async (locale) => {
       const response = await fetch(`${baseUrl}/${locale}`);
 
@@ -402,25 +402,22 @@ describe("the built application, served by `next start`", () => {
           `<link(?=[^>]*rel="canonical")(?=[^>]*href="[^"]*/${locale}")[^>]*>`,
         ),
       );
-      for (const alternateLocale of LOCALES) {
-        expect(document).toMatch(
-          new RegExp(
-            `<link(?=[^>]*rel="alternate")(?=[^>]*hrefLang="${alternateLocale}")(?=[^>]*href="[^"]*/${alternateLocale}")[^>]*>`,
-          ),
-        );
-      }
+      // No `rel="alternate"` link: with one shipped locale there is no other
+      // version to point at. See `src/app/[locale]/layout.tsx`'s
+      // `generateMetadata`.
+      expect(document).not.toMatch(/<link[^>]*rel="alternate"/);
     },
   );
 
-  it("serves distinct metadata for English and Japanese", async () => {
-    const documents = await Promise.all(
-      LOCALES.map(async (locale) => (await fetch(`${baseUrl}/${locale}`)).text()),
-    );
+  // Issue tracked by starting-an-app's locale decision: the app is
+  // English-only for now, and `/ja` is what proves it — a request for a
+  // locale this app no longer ships redirects to the default locale (see
+  // tests/proxy.test.ts) and then 404s there, rather than rendering a
+  // Japanese page.
+  it("404s for /ja, the locale this app no longer ships", async () => {
+    const response = await fetch(`${baseUrl}/ja`);
 
-    expect(documents[0]).not.toContain(`<title>${MESSAGES.ja.Metadata.title}</title>`);
-    expect(documents[0]).not.toContain(
-      `<meta name="description" content="${MESSAGES.ja.Metadata.description}"`,
-    );
+    expect(response.status).toBe(404);
   });
 
   // The two halves of "an unknown route 404s" are asserted apart, and both with
@@ -457,9 +454,6 @@ describe("the built application, served by `next start`", () => {
       expect(document).toContain(MESSAGES[locale].NotFound.title);
       expect(document).toContain(MESSAGES[locale].NotFound.description);
       expect(document).toContain(MESSAGES[locale].NotFound.homeLink);
-
-      const otherLocale = locale === "en" ? "ja" : "en";
-      expect(document).not.toContain(MESSAGES[otherLocale].NotFound.title);
     },
   );
 });

@@ -124,8 +124,9 @@ describe("checkStagedChange", () => {
     // Asserted on the credential message rather than the path one: if the
     // path rule silently came back it would short-circuit the content scan,
     // and this row is what notices. The variable is named generically because
-    // the suite that keeps the AI layer removable tracks the provider's own
-    // env name, and this file has no business joining that removal.
+    // the rule detects the key shape regardless of which environment
+    // variable carries it, and this application's own env schema declares no
+    // provider credential to name instead.
     const dir = makeRepo();
     const key = ["export LLM_API_KEY=", "sk-ant-", "a".repeat(25)].join("");
     const change = { status: "A", path: stage(dir, ".envrc", `${key}\n`) };

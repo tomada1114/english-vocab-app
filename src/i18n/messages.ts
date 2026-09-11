@@ -1,5 +1,4 @@
 import en from "../../messages/en.json";
-import ja from "../../messages/ja.json";
 import type { Locale } from "./locales";
 
 /**
@@ -8,8 +7,9 @@ import type { Locale } from "./locales";
  * @remarks
  * The English catalog is the source of truth for the *shape*: it is the one
  * this repository writes first, and every other locale is a translation of it.
- * {@link MESSAGES} being annotated as a full `Record` is what turns "ja is
- * missing a key" into a type error rather than a blank string at runtime.
+ * {@link MESSAGES} being annotated as a full `Record` is what turns a missing
+ * key in a future locale into a type error rather than a blank string at
+ * runtime.
  */
 export type Messages = typeof en;
 
@@ -43,11 +43,11 @@ export type MessageKey = DottedKeys<Messages>;
  * The catalogs, keyed by locale.
  *
  * @remarks
- * Both are imported statically rather than through a dynamic `import()` per
- * locale. Two small catalogs are not worth a code-split, and a static import is
- * what gives {@link Messages} something to be inferred from.
+ * Imported statically rather than through a dynamic `import()` per locale. A
+ * small catalog is not worth a code-split, and a static import is what gives
+ * {@link Messages} something to be inferred from.
  */
-export const MESSAGES: Readonly<Record<Locale, Messages>> = { en, ja };
+export const MESSAGES: Readonly<Record<Locale, Messages>> = { en };
 
 declare module "next-intl" {
   // Teaches `useTranslations`, `getTranslations` and `useLocale` this

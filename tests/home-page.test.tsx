@@ -52,18 +52,9 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders a locale link for every shipped locale", async () => {
+  it("renders no locale switcher, now that the app ships only one locale", async () => {
     await renderHomePage();
 
-    const nav = screen.getByRole("navigation", { name: en.LocaleSwitcher.label });
-    expect(nav).toBeInTheDocument();
-
-    const english = screen.getByRole("link", { name: en.LocaleSwitcher.en });
-    expect(english).toHaveAttribute("href", "/en");
-    expect(english).toHaveAttribute("hreflang", "en");
-
-    const japanese = screen.getByRole("link", { name: en.LocaleSwitcher.ja });
-    expect(japanese).toHaveAttribute("href", "/ja");
-    expect(japanese).toHaveAttribute("hreflang", "ja");
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 });
