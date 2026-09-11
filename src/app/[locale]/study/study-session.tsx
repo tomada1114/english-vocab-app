@@ -59,7 +59,7 @@ export function StudySession(): ReactElement {
     startSession()
       .then(async (started) => {
         if (started.queue.length === 0) {
-          await finish(started.id);
+          await finish(started.sessionId);
           return;
         }
         setSession(started);
@@ -76,15 +76,15 @@ export function StudySession(): ReactElement {
       if (session === null || current === undefined) {
         return;
       }
-      const { requeue } = await recordReview(session.id, current.cardId, rating);
+      const { requeue } = await recordReview(session.sessionId, current.cardId, rating);
       const rest = session.queue.slice(1);
       const queue = requeue ? [...rest, current] : rest;
       setRevealed(false);
       if (queue.length === 0) {
-        await finish(session.id);
+        await finish(session.sessionId);
         return;
       }
-      setSession({ id: session.id, queue });
+      setSession({ sessionId: session.sessionId, queue });
     },
     [session, current, finish],
   );
@@ -102,7 +102,7 @@ export function StudySession(): ReactElement {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
         if (session !== null) {
-          void finish(session.id);
+          void finish(session.sessionId);
         }
         return;
       }

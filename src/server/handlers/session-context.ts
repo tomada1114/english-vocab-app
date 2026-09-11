@@ -107,7 +107,18 @@ export function sessionIdFrom(request: Request): number | null {
   const segments = new URL(request.url).pathname
     .split("/")
     .filter((segment) => segment !== "");
-  const raw = segments.at(-2) ?? "";
+  return parseSessionId(segments.at(-2) ?? "");
+}
+
+/**
+ * `raw` as a session id, or `null` when it names none.
+ *
+ * @remarks
+ * The one place this shape is decided, so {@link sessionIdFrom} (a request's
+ * path segment) and the summary page (a route's `id` param) cannot silently
+ * disagree on what counts as a valid id.
+ */
+export function parseSessionId(raw: string): number | null {
   return /^\d+$/.test(raw) ? Number(raw) : null;
 }
 

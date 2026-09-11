@@ -11,7 +11,7 @@ export interface QueuedCard {
 
 /** What `POST /api/sessions` answers with. */
 export interface OpenSession {
-  readonly id: number;
+  readonly sessionId: number;
   readonly queue: readonly QueuedCard[];
 }
 

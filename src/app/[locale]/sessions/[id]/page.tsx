@@ -6,6 +6,7 @@ import type { ReactElement } from "react";
 import { Link } from "../../../../i18n/navigation";
 import { LOCALES } from "../../../../i18n/locales";
 import { readSessionSummary } from "../../../../server/composition";
+import { parseSessionId } from "../../../../server/handlers/session-context";
 
 /**
  * Read per request, never prerendered.
@@ -40,7 +41,8 @@ export default async function SessionSummaryPage({
     notFound();
   }
 
-  const summary = /^\d+$/.test(id) ? readSessionSummary(Number(id)) : undefined;
+  const sessionId = parseSessionId(id);
+  const summary = sessionId === null ? undefined : readSessionSummary(sessionId);
   if (summary === undefined) {
     notFound();
   }

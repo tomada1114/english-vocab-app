@@ -72,7 +72,7 @@ function stubFetch({
       return Promise.resolve(
         startFails
           ? new Response("{}", { status: 500 })
-          : Response.json({ id: 1, queue }),
+          : Response.json({ sessionId: 1, queue }),
       );
     }
     if (url.endsWith("/reviews")) {
