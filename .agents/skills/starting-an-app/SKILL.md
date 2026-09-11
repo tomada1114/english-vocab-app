@@ -2,37 +2,30 @@
 name: starting-an-app
 description: >
   Covers turning this template into a new application: the copy-and-rename procedure
-  driven by tests/placeholders.test.ts, what a new project keeps untouched, removing the
-  AI layer whole under tests/ai-layer-removal.test.ts, and whether to keep both locales
-  or drop one. Use when starting an app from this repository, replacing the package
-  name, the app's display name or the repository slug in a badge or advisory link,
-  deleting src/ai/ and the route that depends on it, or dropping a locale from
-  src/i18n/locales.ts and messages/.
+  driven by tests/placeholders.test.ts, what a new project keeps untouched, and whether
+  to keep both locales or drop one. Use when starting an app from this repository,
+  replacing the package name, the app's display name or the repository slug in a badge
+  or advisory link, or dropping a locale from src/i18n/locales.ts and messages/.
 ---
 
 # Starting an App
 
 **Owns:** turning this repository into a new application — the rename, what the new app
-keeps, removing the AI layer whole, and the locale decision. **Does not own:** how a
-skill is authored or mirrored (`authoring-skills`); the README's own prose
-(`updating-docs`); what a gate file may contain (`changing-gates`); working inside the
-App Router tree (`building-app-routes`); the port, its adapters, and swapping one
-provider for another (`integrating-llm`).
+keeps, and the locale decision. **Does not own:** how a skill is authored or mirrored
+(`authoring-skills`); the README's own prose (`updating-docs`); what a gate file may
+contain (`changing-gates`); working inside the App Router tree (`building-app-routes`).
 
 There is deliberately no bootstrap script. The one this repository used to ship was
 profile-driven machinery that rewrote the tree and then deleted itself, so the only
 record of what it did was a file that no longer existed. What replaced it is this
-procedure plus two tests holding the lists a script would have hard-coded. Do not
+procedure plus a test holding the list a script would have hard-coded. Do not
 reintroduce a script, a profile, or a self-deleting block.
 
 ## The order
 
 Rename first, so nothing downstream is written against the template's identity. Decide
-the AI layer next — keep it or remove it whole — before writing code of your own:
-removal touches `eslint.config.mjs`, `vitest.config.ts` and AGENTS.md, and doing it once
-your own modules have grown into `src/server/` turns a bounded deletion into a merge.
-Decide the locales last, then run `pnpm check:source` once. Each step below names the
-narrower check to run while you are inside it.
+the locales last, then run `pnpm check:source` once. Each step below names the narrower
+check to run while you are inside it.
 
 ## The rename
 
@@ -107,10 +100,9 @@ rename unchanged and is most of what starting from this template buys:
   mechanical layer this repository ships and the only thing standing between a secret
   and the commit history. It is language-agnostic; keep it whatever the app becomes.
 - **The skills** under `.agents/skills/` and their generated mirror. Drop one only when
-  the subject it owns actually leaves the repository — removing the AI layer removes
-  `integrating-llm`, and `tests/ai-layer-removal.test.ts` names it rather than leaving
-  the call to memory. **REQUIRED:** `authoring-skills` for the loop that keeps the two
-  trees identical, and for the AGENTS.md Skills table row that
+  the subject it owns actually leaves the repository, rather than leaving the call to
+  memory. **REQUIRED:** `authoring-skills` for the loop that keeps the two trees
+  identical, and for the AGENTS.md Skills table row that
   `tests/skills-frontmatter.test.ts` requires in both directions.
 - **The label workflow** — `.github/labels.yml`, `scripts/sync-labels.mjs` behind
   `pnpm repo:labels`, and `.github/workflows/pr-label.yml`. Run `pnpm repo:labels`
@@ -120,90 +112,6 @@ rename unchanged and is most of what starting from this template buys:
 - **`.env.example`**, even when the app reads nothing yet. `src/server/env.ts` is the
   only module that touches `process.env`, and `tests/server-env.test.ts` asserts the two
   stay in step; the example file is half of that check.
-
-## Removing the AI layer
-
-`tests/ai-layer-removal.test.ts` is the specification. Read it, then run it **before**
-deleting anything:
-
-```bash
-pnpm exec vitest run tests/ai-layer-removal.test.ts
-```
-
-Green means the layer is still separable and the lists in that file are complete — the
-property it exists to defend, checkable only while the layer is present. It cannot be
-the check you run afterwards, because it is on its own removal list. Those lists are the
-procedure:
-
-- **`REMOVED_PATHS`** — deleted outright. `src/server/composition.ts` is on it because
-  wiring a port is the whole of what that file does, `src/app/api` because the one route
-  there is the layer's only caller, and the `integrating-llm` skill with its
-  `.claude/skills/` mirror because the subject it documents is what leaves.
-- **`AI_LAYER_TOKENS`** — `ANTHROPIC_API_KEY` and `@anthropic-ai`, the two vendor names
-  a file can carry without naming a path. **`AI_LAYER_SYMBOLS`** is the other half: the
-  names this repository gives the layer's own surface, which a document cites as often
-  as it cites a path.
-- **`REMOVED_SKILL_NAMES`** — the bare name of every skill on `REMOVED_PATHS`, derived
-  from it rather than listed again; today just `integrating-llm`. Sibling skills
-  cross-reference each other by name and never by path, so without this a
-  `**BACKGROUND:** \`integrating-llm\`` line would survive the removal unnoticed.
-- **`EDITED_CODE_FILES`** — files that survive but must stop naming it, whose subject is
-  the repository's machinery. That this list is short, and holds no application module,
-  _is_ the separability property.
-- **`EDITED_DOCUMENT_FILES`** — files that survive but must stop describing the layer to
-  a reader. This one claims completeness and nothing else: it grows whenever a skill
-  teaches a rule through the port or the handler, and that growth is expected.
-
-Delete the paths, then work through both edited lists:
-
-- `src/server/env.ts` loses the key from its schema and `.env.example` the matching
-  line. `API_ACCESS_KEY` and the rule requiring it stay: the rule is keyed off what the
-  composition root wires (`requiresAccessKey`), not off a vendor's variable, so it
-  survives the vendor leaving and is waiting for the first endpoint of your own that
-  costs money to answer. Keep `src/server/env.ts` itself, empty schema and all — it is
-  the seam the next secret enters through, and deleting it means rediscovering where
-  `process.env` is allowed to be read.
-- `eslint.config.mjs` loses the vendor-SDK zone rules, and `tests/boundaries.test.ts`
-  the cases asserting them.
-- `vitest.config.ts` loses the deleted suites from `automationTests` and the removed
-  zone from its coverage glob. Narrowing a glob over a directory that no longer exists
-  is not lowering a floor; no threshold number moves, and none may.
-- `README.md` and AGENTS.md lose the route and the port from their prose — AGENTS.md's
-  Architecture tree, its three seams, and the contract statement all name them.
-- `tests/server-env.test.ts` loses the cases for the removed key.
-- The skills on `EDITED_DOCUMENT_FILES` teach rules that outlive the layer and
-  illustrate them with it. **Delete the illustration and leave the rule standing** — the
-  sentence, the bullet, or the section whose _subject_ is the layer. Do not write a
-  replacement now: you are here before your own code exists, and a rule with no example
-  is still a rule. Add one when you have code worth pointing at.
-- Grep to find the sites, then read the file: the needles
-  `tests/ai-layer-removal.test.ts` lists — `REMOVED_PATHS`, `AI_LAYER_TOKENS`,
-  `AI_LAYER_SYMBOLS` and `REMOVED_SKILL_NAMES` — are a lower bound, not a substitute for
-  reading it. The skills on `EDITED_DOCUMENT_FILES` were written before
-  `authoring-skills` required a new mention to carry a needle, so a paragraph can name
-  the layer with none: `building-app-routes`' "The zero-credential quick start is
-  untouched by all of this" paragraph names no path, token, symbol or skill, and a grep
-  alone walks past it. A skill's frontmatter `description` is a site like any other: it
-  is that skill's one trigger surface, and a trigger naming a file that is gone is dead
-  weight nothing reports once this suite is deleted. Several descriptions name a removed
-  path today, this skill's own among them.
-- Two are not sentence surgery. `integrating-llm` is deleted rather than edited, its
-  whole subject being the layer; and `localizing-ui` loses its `outputLanguage` section
-  whole, heading included — that seam is the port's, and the UI locale it maps from has
-  nowhere left to reach. The catalogs and the locale routing are untouched, but the
-  section is not the only place `outputLanguage` appears: the skill's frontmatter
-  `description` and its **Owns:** sentence both name the same seam and both need the
-  same edit.
-- This skill loses its "Removing the AI layer" section — it is on
-  `EDITED_DOCUMENT_FILES` because a procedure for deleting something already gone is
-  stale prose. Edit the `.agents/` copy and run `pnpm agents:sync`; never hand-edit the
-  mirror.
-
-Delete `tests/ai-layer-removal.test.ts` last: it is the checklist while you work, and
-the first dangling reference the moment the paths are gone. The proof that nothing
-dangles afterwards is the gate — `pnpm check:source` type-checks, lints, builds and
-tests the tree that remains, which is exactly the set of failures a stale import, a
-stale zone rule or a stale test would produce.
 
 ## The locale decision
 

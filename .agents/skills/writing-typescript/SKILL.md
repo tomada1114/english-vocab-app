@@ -5,8 +5,8 @@ description: >
   component: narrowing unknown instead of any, `satisfies` vs `as`, a type guard,
   interface vs type, an exhaustive switch over a union, inline `import type` under
   verbatimModuleSyntax, why `enum` is rejected (no-restricted-syntax), what a zone
-  surface like src/ai/index.ts may export, annotating a return type or a generic
-  boundary, hitting noUncheckedIndexedAccess, exactOptionalPropertyTypes or
+  surface may export, annotating a return type or a generic boundary, hitting
+  noUncheckedIndexedAccess, exactOptionalPropertyTypes or
   noPropertyAccessFromIndexSignature, placing a new constant, or fixing a logic bug in
   an existing src/ function.
 ---
@@ -23,23 +23,21 @@ the `.mjs` files under `scripts/` (`writing-repo-scripts`).
 
 - An error `code` string is not a naming decision made here — **REQUIRED:**
   `designing-errors` owns the `ERR_*` vocabulary for both `src/` and `scripts/`.
-- Keep a constant next to the code that reads it. `OUTPUT_LANGUAGE_BY_LOCALE` and
-  `STATUS_BY_LLM_CODE` both sit in `src/server/handlers/ask.ts` because that handler is
-  the only module that reads either. Do not create a shared `constants.ts` grab-bag that
-  forces unrelated modules to import each other.
+- Keep a constant next to the code that reads it — beside the one handler or module that
+  uses it, not in a shared `constants.ts` grab-bag that forces unrelated modules to
+  import each other.
 
 ## Boundary types: unknown, any, and assertions
 
 - Take `unknown` at an untyped boundary and narrow it before use. A parsed request body
   (`let body: unknown = await request.json()`), a caught error, a value handed in for a
-  schema to validate — `FakeLlmPortOptions.response` is `unknown` on purpose, so a value
-  that does _not_ match the caller's schema stays expressible. `any` disables checking
-  for everything downstream of the boundary, not just at it.
+  schema to validate should stay `unknown` until something actually checks its shape.
+  `any` disables checking for everything downstream of the boundary, not just at it.
 - Prefer `satisfies` to `as` on a typed literal: `satisfies` keeps excess-property and
   missing-property checking, `as` silences both. `as const satisfies Record<K, V>` also
-  keeps the literal keys, which is what makes a table exhaustive against a union —
-  `STATUS_BY_LLM_CODE` fails to compile when a code is added rather than falling through
-  to a default status.
+  keeps the literal keys, which is what makes a table exhaustive against a union — a
+  code-to-status table built that way fails to compile when a code is added rather than
+  falling through to a default status.
 - A type assertion (`as T`) changes only the compile-time type — it provides zero
   runtime safety. Reach for a type guard (`value is T`) when narrowing on runtime shape,
   and keep any assertion that survives review local and non-exported.
@@ -72,8 +70,7 @@ the `.mjs` files under `scripts/` (`writing-repo-scripts`).
   asserting it away.
 - `exactOptionalPropertyTypes` makes an absent property and an explicit `undefined`
   distinct types. An options interface whose properties are genuinely omissible declares
-  them `readonly` and `?:` — `LlmRequest.signal` and every field of `FakeLlmPortOptions`
-  are the shape to copy. An internal argument whose omission would be a bug takes a
+  them `readonly` and `?:`. An internal argument whose omission would be a bug takes a
   required `T | undefined` instead, so a caller cannot drop it by accident.
 - The same flag meets React props: passing `prop={undefined}` explicitly does not
   satisfy `readonly prop?: string`. When a caller really does pass `undefined` — a value
@@ -87,7 +84,7 @@ the `.mjs` files under `scripts/` (`writing-repo-scripts`).
   `writing-repo-scripts` for that rule itself.
 - Do not introduce `enum`. `eslint.config.mjs` blocks `TSEnumDeclaration` through
   `no-restricted-syntax`, and the message there says why. A union of string literals
-  (`LlmErrorCode`) or an `as const` object is what replaces it.
+  (`Locale`, in `src/i18n/locales.ts`) or an `as const` object is what replaces it.
 
 ## Function boundaries and generics
 
@@ -99,11 +96,9 @@ the `.mjs` files under `scripts/` (`writing-repo-scripts`).
   accidentally widen a generic that should stay preserved. **BACKGROUND:**
   `type-testing`.
 - Keep exported generics narrow: accept the widest reasonable input, return the
-  narrowest true output. `LlmPort.generate` is the worked example — it returns
-  `Promise<Result<z.infer<TSchema>, LlmError>>`, so a caller gets its own schema's type
-  back instead of a widened one. `ok<T>(value: T): Result<T, never>` in
-  `src/core/result.ts` is the same idea on the other branch: `never` keeps the value
-  assignable to a `Result<T, E>` for any `E` without the caller restating it.
+  narrowest true output. `ok<T>(value: T): Result<T, never>` in `src/core/result.ts` is
+  the worked example: `never` keeps the value assignable to a `Result<T, E>` for any `E`
+  without the caller restating it.
 - Let inference do the work inside a function body; reserve explicit annotations for
   boundaries (parameters, exported return types), not every local binding.
 
@@ -127,18 +122,18 @@ the `.mjs` files under `scripts/` (`writing-repo-scripts`).
   `eslint.config.mjs` names the protocol nowhere. No module under `src/` imports one
   today, but that is a description of this tree, not a rule to defend — the restriction
   older prose here claimed never existed in this repository.
-- What is real is the zone boundary. `src/core/**` may not import the framework or a
-  vendor SDK; `src/app/**` and `src/server/**` reach the AI layer only through
-  `src/ai/index.ts`; `src/ai/port.ts` may not import an adapter. AGENTS.md's
-  Architecture section states the direction and `eslint.config.mjs`'s `boundaries/*`
-  blocks carry the patterns, with `tests/boundaries.test.ts` asserting the same shape
-  from the module graph. Read those rather than a summary here.
-- A zone publishes through one file, and that file names every symbol: `src/ai/index.ts`
-  re-exports the port, its error vocabulary and one adapter by name. `export *` is
-  banned under `src/` (`no-restricted-syntax`), so what a zone above may reach is
-  exactly what a reviewer can read in that file's diff. Adding a symbol there is a
-  decision about the zone's surface, not a re-export detail — and reaching past it into
-  a private tree is what the boundary rules exist to stop.
+- What is real is the zone boundary. `src/core/**` may not import the framework;
+  `src/server/**` may not import `src/app/**`; `src/i18n/**` is a leaf neither
+  `src/app/` nor `src/server/` may be imported from. AGENTS.md's Architecture section
+  states the direction and `eslint.config.mjs`'s `boundaries/*` blocks carry the
+  patterns, with `tests/boundaries.test.ts` asserting the same shape from the module
+  graph. Read those rather than a summary here.
+- A zone with a private tree beneath its own surface should publish through one file
+  that names every symbol, rather than let a caller reach past it — `export *` is banned
+  under `src/` (`no-restricted-syntax`), so what a zone above may reach is exactly what
+  a reviewer can read in that file's diff. Adding a symbol there is a decision about the
+  zone's surface, not a re-export detail, and reaching past it into a private tree is
+  what the boundary rules exist to stop.
 - A module that outgrows the per-file size budget in `eslint.config.mjs`'s
   `src/size-budget` block is a module doing more than one thing. Split it; the number is
   a ceiling, not a target, and raising it is what AGENTS.md rules out.

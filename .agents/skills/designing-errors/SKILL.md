@@ -2,19 +2,17 @@
 name: designing-errors
 description: >
   Covers the shape of an error type and the vocabulary of its `code` string, in both
-  src/** — LlmError and the ERR_LLM_* codes src/ai/errors.ts declares — and scripts/**,
-  where a stage prefix such as ERR_AGENTS_* or ERR_LABELS_* is reported on stderr. Use
-  when adding or changing an Error subclass, choosing or renaming an ERR_* code,
-  deciding what an error may carry and what it must never carry (a credential, a prompt,
-  a model's output), wiring an AbortSignal rejection reason, or writing the PR line that
-  a changed code needs.
+  src/** and scripts/**, where a stage prefix such as ERR_AGENTS_* or ERR_LABELS_* is
+  reported on stderr. Use when adding or changing an Error subclass, choosing or
+  renaming an ERR_* code, deciding what an error may carry and what it must never carry
+  (a credential, request content), wiring an AbortSignal rejection reason, or writing
+  the PR line that a changed code needs.
 ---
 
 # Designing Errors
 
 **Owns:** the shape of an error type and the vocabulary of `code` strings, in both
-`src/**` and `scripts/**`. **Does not own:** which `ERR_LLM_*` code an adapter produces
-for a given provider failure (`integrating-llm`); general type-system judgment
+`src/**` and `scripts/**`. **Does not own:** general type-system judgment
 (`writing-typescript`); how an error is asserted in a test (`writing-tests`); the HTTP
 status and response body a code is answered with (`building-app-routes`); the full
 stderr message shape for repository automation (`writing-repo-scripts` — the `ERR_`
@@ -34,13 +32,13 @@ handling that matches on `message` text — match on `code`, or on the error's c
   `readonly code` as a **literal** type — never `string`. The literal is what lets a
   consumer narrow on `code` and get a typed error back.
 - Two spellings, both correct, chosen by how many failures the class covers. One class
-  over a closed vocabulary takes the code as a constructor parameter typed as the union
-  (`LlmError`, in `src/ai/errors.ts`); a class per failure declares
-  `readonly code = "ERR_..." as const`. A class whose `code` widens to `string` gives a
-  consumer nothing to switch on and is the shape to reject in review.
-- Keep the underlying failure on `cause` rather than folding it into `message`.
-  `LlmError` carries the provider's own error there, so a log can still show it without
-  any caller having to know that provider's error classes.
+  over a closed vocabulary takes the code as a constructor parameter typed as the union;
+  a class per failure declares `readonly code = "ERR_..." as const`. A class whose
+  `code` widens to `string` gives a consumer nothing to switch on and is the shape to
+  reject in review.
+- Keep the underlying failure on `cause` rather than folding it into `message`, so a log
+  can still show the original failure without any caller having to parse a message
+  string for it.
 
 ```ts
 export class SchemaMismatchError extends Error {
@@ -66,14 +64,14 @@ what it holds on that basis, not on what would be convenient to debug with.
 
 - **Never a credential.** No API key, no `Authorization` header, no URL with a token in
   its query string, no environment value read through `src/server/env.ts`.
-- **Never request content.** The prompt, the model's output, and the parsed request body
-  are all data someone else supplied; a message that quotes them turns every log line
-  into a copy of them. Name the shape instead — a field path, a length that was
+- **Never request content.** A submitted body, a query, or anything else someone else
+  supplied is data whose content a message must not quote — quoting it turns every log
+  line into a copy of it. Name the shape instead — a field path, a length that was
   exceeded, an allowed set — not the content.
-- The worked example is `src/server/handlers/ask.ts`: it answers with the failure's
-  `code`, an HTTP status and one fixed sentence, and sends **none** of the provider's
-  own error text, because a provider message can carry the prompt back to the caller.
-  The provider error is on `cause`, which is for the server-side log and stops there.
+- A handler answering an error should send only the failure's `code`, an HTTP status and
+  one fixed sentence — never a lower-level error's own text, which can carry request
+  content back to the caller. Keep that lower-level error on `cause`, which is for the
+  server-side log and stops there.
 - For an argument-validation error, the field that names what was rejected is the dotted
   path as written in the public signature (`options.maxLength`) — never an internal
   variable name, which can be renamed without that being a contract change.
@@ -85,12 +83,10 @@ object, not as a fresh error carrying the same message — a caller that aborts 
 own instance compares `error.cause === myReason` to learn that _its_ cancellation is
 what happened, and a copy breaks that.
 
-- `asError(reason, fallback)` in `src/ai/errors.ts` is the helper: it returns the reason
-  itself when it already is an `Error`, and otherwise wraps it, keeping the raw value (a
-  string, `undefined`, anything `abort()` may carry) on `cause`.
-- `abortedLlmError(reason)` builds the error an aborted request reports, with that
-  preserved reason on `cause`. `tests/ai-port.test.ts` pins both halves — identity for
-  an `Error` reason, wrapping for a non-`Error` one.
+- Write a small helper that returns a reason unchanged when it already is an `Error`,
+  and otherwise wraps it, keeping the raw value (a string, `undefined`, anything
+  `abort()` may carry) on `cause`. Test both halves — identity for an `Error` reason,
+  wrapping for a non-`Error` one.
 - The mirror image, for a function that _raises_ the abort: pass the exact same error
   instance to `controller.abort(...)` and to the rejection, so a cooperating operation
   reading `signal.reason` sees the identical object the caller's `catch` receives.
@@ -98,13 +94,11 @@ what happened, and a copy breaks that.
 ## Choosing a `code` string
 
 - `ERR_` prefix, `SCREAMING_SNAKE_CASE`, describing the failure rather than the function
-  that raised it (`ERR_LLM_TIMEOUT`, not `ERR_GENERATE_FAILED`).
-- Under `src/**`, the prefix after `ERR_` names the layer the code belongs to, and the
-  layer owns its union in one file: `src/ai/errors.ts` declares every failure an
-  `LlmPort` may report. Read it for what each member means — its TSDoc groups them by
-  what a caller can _do_ about each, which is the axis the vocabulary is built on, not
-  which provider produced it. Add a member there, once, rather than per adapter: a new
-  member changes what every adapter promises.
+  that raised it (`ERR_PAYLOAD_TOO_LARGE`, not `ERR_READ_FAILED`).
+- Under `src/**`, the prefix after `ERR_` names the layer the code belongs to. A layer
+  with more than a couple of failure codes should own its union in one file, the way
+  `src/server/http.ts` owns the small vocabulary a request read can fail with. Add a
+  member there, once, rather than scattering the same failure's spelling across callers.
 - Under `scripts/**`, the code carries the stage prefix of the check that raised it
   (`ERR_AGENTS_*` in `scripts/sync-agents.mjs`, `ERR_LABELS_*` in
   `scripts/lib/labels-manifest.mjs`, `ERR_GIT_*`, `ERR_GH_*`), so the code alone —
@@ -119,16 +113,14 @@ what happened, and a copy breaks that.
 ## Changing a `code`
 
 Nothing here is published, so this is not a semver decision. It is still a contract
-change: AGENTS.md counts the `ERR_LLM_*` codes and the `error.code` vocabulary of the
-HTTP surface among the things a caller outside the process observes, so adding,
-renaming, or removing one changes what a client's `switch` compiles against and what an
-operator's alerting matches on.
+change: AGENTS.md counts a route's `error.code` vocabulary among the things a caller
+outside the process observes, so adding, renaming, or removing one changes what a
+client's `switch` compiles against and what an operator's alerting matches on.
 
 - Say so in the PR body, in one line naming the old code, the new one, and what a client
   has to change. A code that changes silently is one nobody downstream finds out about
   until an alert stops firing.
-- There is a compile-time backstop for one half of it: `STATUS_BY_LLM_CODE` in
-  `src/server/handlers/ask.ts` is written
-  `as const satisfies Record<LlmErrorCode, number>`, so a code added to or removed from
-  the union fails the build until that table agrees. It cannot see a client, and it
-  cannot see a `scripts/**` code at all.
+- There is a compile-time backstop for one half of it: a status-by-code table written
+  `as const satisfies Record<ThatUnion, number>` is what makes a code added to or
+  removed from the union fail the build until the table agrees with it. It cannot see a
+  client, and it cannot see a `scripts/**` code at all.

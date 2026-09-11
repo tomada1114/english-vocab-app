@@ -37,44 +37,20 @@ const optionalSetting = z
  */
 const serverEnvShape = z.object({
   /**
-   * Credential for the Anthropic adapter.
+   * The shared secret a caller of a billed endpoint must present.
    *
    * @remarks
-   * Optional because `src/server/composition.ts` wires the fake adapter by
-   * default, which needs no credential at all — that is what keeps the
-   * template's promise that `pnpm dev` answers a request with nothing
-   * configured. The key stays in this schema because the Anthropic adapter is
-   * still shipped and still one line away in `src/server/composition.ts`: a
-   * deployment that switches to it supplies this variable, and the adapter
-   * reports a missing or rejected key as the port's `ERR_LLM_AUTH` on the
-   * request that needed it — a failure a caller can see and act on, which a
-   * server that refuses to boot is not.
+   * Optional on its own — nothing this application wires today bills a
+   * provider or has anything to protect — but required as soon as a future
+   * composition root wires something that does, which it says by passing
+   * {@link ServerEnvRequirements.requiresAccessKey}.
    *
-   * Its mere presence obliges nothing. A machine can have this exported for
-   * something else entirely — the fixture recording flow in
-   * `tests/ai-port.test.ts` needs it — while this application still answers
-   * from the fake adapter and bills no one. What obliges
-   * {@link serverEnvShape.API_ACCESS_KEY} is which adapter is wired, not which
-   * variables happen to be set; see {@link ServerEnvRequirements}.
-   */
-  ANTHROPIC_API_KEY: optionalSetting,
-
-  /**
-   * The shared secret a caller of `POST /api/ask` must present.
-   *
-   * @remarks
-   * Optional on its own — the zero-credential quick start answers from the
-   * fake adapter and has nothing to protect — but required as soon as
-   * `src/server/composition.ts` wires an adapter that bills a provider, which
-   * it says by passing {@link ServerEnvRequirements.requiresAccessKey}.
-   *
-   * `src/server/composition.ts` hands the value to the handler, which
-   * compares it against the caller's `Authorization: Bearer` credential.
-   * `API_ACCESS_KEY` is authentication only. This template deliberately ships
-   * neither a rate limit nor a concurrency limit; deployments using a billed
-   * adapter must apply their deployment-wide caller-throughput policy at an edge
-   * or gateway before `POST /api/ask` reaches the app. See
-   * `building-app-routes` for that guidance.
+   * A handler that reads this value compares it against the caller's
+   * `Authorization: Bearer` credential. `API_ACCESS_KEY` is authentication
+   * only. This template deliberately ships neither a rate limit nor a
+   * concurrency limit; a deployment behind a billed endpoint must apply its
+   * deployment-wide caller-throughput policy at an edge or gateway before the
+   * request reaches the app. See `building-app-routes` for that guidance.
    */
   API_ACCESS_KEY: optionalSetting,
 });
@@ -82,23 +58,22 @@ const serverEnvShape = z.object({
 /** The validated environment, as the rest of `src/server/` sees it. */
 export type ServerEnv = z.infer<typeof serverEnvShape>;
 
-/** What the composition root has to tell {@link readServerEnv} about itself. */
+/** What a future composition root has to tell {@link readServerEnv} about itself. */
 export interface ServerEnvRequirements {
   /**
-   * Whether the adapter the composition root wires bills a provider per answer.
+   * Whether the route a composition root wires bills a provider per answer.
    *
    * @remarks
-   * `POST /api/ask` reaches the model call with nothing in front of it: no
-   * middleware (`src/proxy.ts`'s matcher excludes `api` outright) and no check
-   * in the handler beyond body validation. So an endpoint that costs money to
-   * answer must not also be open, and `true` here is what makes that
+   * A route under `src/app/` can reach a paid call with nothing in front of
+   * it: no middleware (`src/proxy.ts`'s matcher excludes `api` outright) and
+   * whatever check the handler itself performs. So an endpoint that costs
+   * money to answer must not also be open, and `true` here is what makes that
    * impossible to forget — `readServerEnv` throws, and the server stops as it
    * starts rather than serving one request unprotected.
    *
-   * It is the adapter that decides this, never the environment. Keying the
-   * rule off whether a provider credential is *present* would refuse to start
-   * on any machine that exports one for an unrelated reason, while the fake
-   * adapter — which bills nothing — is what actually answers.
+   * It is the composition root that decides this, never the environment.
+   * Keying the rule off whether a provider credential is *present* would
+   * refuse to start on any machine that exports one for an unrelated reason.
    */
   readonly requiresAccessKey: boolean;
 }
@@ -113,7 +88,7 @@ const billedServerEnvSchema = serverEnvShape.superRefine((env, ctx) => {
     path: ["API_ACCESS_KEY"],
     // Names, never values: this message reaches a log and a crash report.
     message:
-      "API_ACCESS_KEY is required because src/server/composition.ts wires an adapter that bills a provider for every answer. POST /api/ask reaches that model call with no authentication of its own, so it must not be left open.",
+      "API_ACCESS_KEY is required because the composition root wires a route that bills a provider for every answer, with no authentication of its own, so it must not be left open.",
   });
 });
 

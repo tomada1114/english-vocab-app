@@ -6,9 +6,9 @@ import { DEFAULT_LOCALE, LOCALES } from "../src/i18n/locales";
 
 // The failure this file exists to catch is silent: `proxy.ts` decides which
 // requests acquire a locale prefix, and `src/app/[locale]/` decides which
-// prefixes render. Disagree, and `/` 404s — or `/api/ask` gets redirected to
-// `/en/api/ask` — with every other suite still green, because nothing else in
-// the repository reads both halves.
+// prefixes render. Disagree, and `/` 404s — or `/api/hello` gets redirected to
+// `/en/api/hello` — with every other suite still green, because nothing else
+// in the repository reads both halves.
 
 /**
  * `config.matcher` as a regular expression.
@@ -49,7 +49,7 @@ describe("the paths locale detection runs on", () => {
 
   it.each([
     ["an API route", "/api"],
-    ["a nested API route", "/api/ask"],
+    ["a nested API route", "/api/hello"],
     ["a framework asset", "/_next/static/chunk.js"],
     ["a deployment-platform path", "/_vercel/insights"],
     ["anything with a file extension", "/favicon.ico"],

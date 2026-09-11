@@ -281,15 +281,13 @@ Traps that have cost time here:
   text through the `ignore` package rather than resolving it, and `ignore` treats a
   leading `./` as a different string from a leading `../` — so `./../server` is
   invisible to `../**/server` even though it resolves to the same module. Every `ZONE`
-  entry and `AI_LAYER_PRIVATE` therefore carries a `./../**` twin of each `../**`
-  pattern; a bare specifier still cannot start with `./..`, so the twin is exactly as
-  safe as the pattern it doubles.
-- A `group` accepts `!` negations, and the **last matching entry wins**. That is how
-  `AI_LAYER_PRIVATE` states the AI layer's surface as an allow-list —
-  `["../**/ai/**", "./../**/ai/**", "!../**/ai/index", "!./../**/ai/index"]` — rather
-  than a deny-list naming each private module, which would go stale the next time
-  something lands under `src/ai/`. Both patterns must come before both negations, since
-  the `./../` twin needs its own exemption too.
+  entry therefore carries a `./../**` twin of each `../**` pattern; a bare specifier
+  still cannot start with `./..`, so the twin is exactly as safe as the pattern it
+  doubles.
+- A `group` accepts `!` negations, and the **last matching entry wins** — worth knowing
+  before a zone's surface is stated as an allow-list rather than a deny-list naming each
+  private module one by one, which would go stale the next time something lands in the
+  zone.
 - `eslintConfigPrettier` must stay the last element of the exported array. Anywhere else
   it stops turning off the stylistic rules that would fight Prettier, and the two gates
   then disagree about the same file.
@@ -298,15 +296,12 @@ Traps that have cost time here:
   framework rules on `scripts/**` and `tests/**`.
 - The named blocks are the map: `src/shared-syntax`, `src/size-budget`,
   `public-api/explicit-surface`,
-  `boundaries/core-is-framework-free-and-imports-no-zone`,
-  `boundaries/ai-imports-only-core`, `boundaries/port-does-not-know-its-adapters`,
-  `boundaries/i18n-is-a-leaf`, `boundaries/app-reaches-the-ai-layer-through-src-ai`,
-  `boundaries/server-reaches-ai-through-src-ai-and-never-app`,
-  `boundaries/private-trees-are-not-importable`, `automation/node-scripts`,
-  `tests/vitest-rules`, `tests/relaxations`. The six `boundaries/*` blocks are one
-  import order written per zone, so they match disjoint file sets by construction. Name
-  a new block the same way — the name is what a reader, and ESLint's own config
-  inspector, has to identify it by.
+  `boundaries/core-is-framework-free-and-imports-no-zone`, `boundaries/i18n-is-a-leaf`,
+  `boundaries/server-never-imports-app`, `boundaries/private-trees-are-not-importable`,
+  `automation/node-scripts`, `tests/vitest-rules`, `tests/relaxations`. The
+  `boundaries/*` blocks are one import order written per zone, so they match disjoint
+  file sets by construction. Name a new block the same way — the name is what a reader,
+  and ESLint's own config inspector, has to identify it by.
 - `tests/boundaries.test.ts` asserts those same edges from the module graph, and it pins
   zones rather than files. An exhaustive list of the modules under `src/` failed on
   every legal new file, which teaches its reader to edit the meta-test until the day
@@ -329,12 +324,11 @@ Traps that have cost time here:
 No check here boots a browser, and only one boots a server: `pnpm run test:smoke` serves
 the last `pnpm build` with `next start` under `NODE_ENV=production` and asserts over
 `fetch` that `/` redirects to a locale-prefixed path, that `/en` and `/ja` render with
-the right `<html lang>`, that an unknown unprefixed path is redirected rather than 404ed
-and that the prefixed one 404s, and that `POST /api/ask` answers its documented
-statuses. Each hop is asserted with `redirect: "manual"`, because a followed redirect
-merges the proxy's answer with the route's and would pass with the proxy gone. That is
-the whole of what a running server is checked for — the seams between the layers, not
-their behaviour, which each layer's own suite owns.
+the right `<html lang>`, and that an unknown unprefixed path is redirected rather than
+404ed and that the prefixed one 404s. Each hop is asserted with `redirect: "manual"`,
+because a followed redirect merges the proxy's answer with the route's and would pass
+with the proxy gone. That is the whole of what a running server is checked for — the
+seams between the layers, not their behaviour, which each layer's own suite owns.
 
 It runs from `check:source` and from ci.yml's `static` job, both times immediately after
 `Build`, and from neither `pnpm test` nor `pnpm check:quick`: the build is what it

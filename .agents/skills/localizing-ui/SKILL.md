@@ -6,21 +6,19 @@ description: >
   stay in step, ICU arguments and plural categories, and linking with Link from
   src/i18n/navigation.ts rather than next/link. Use when adding a translated string,
   editing messages/en.json or messages/ja.json, touching src/i18n/locales.ts,
-  messages.ts, routing.ts, request.ts or navigation.ts, adding a locale, mapping a UI
-  locale to the LLM port's outputLanguage, or when a message renders as its own key
-  name.
+  messages.ts, routing.ts, request.ts or navigation.ts, adding a locale, or when a
+  message renders as its own key name.
 ---
 
 # Localizing UI
 
 **Owns:** what goes into a message catalog and how a locale reaches the code that
-renders it — `messages/*.json`, the typed key union in `src/i18n/messages.ts`, the
-locale-aware modules under `src/i18n/`, and the one mapping from a UI locale to the LLM
-port's `outputLanguage`. **Does not own:** the shape of a page, layout, Route Handler or
-`src/proxy.ts` (`building-app-routes`); how a rendered test case is written
-(`writing-tests`) and which vitest project it joins (`placing-tests`); TypeScript idiom
-inside a module (`writing-typescript`); dropping a locale when turning this template
-into an app (`starting-an-app`).
+renders it — `messages/*.json`, the typed key union in `src/i18n/messages.ts`, and the
+locale-aware modules under `src/i18n/`. **Does not own:** the shape of a page, layout,
+Route Handler or `src/proxy.ts` (`building-app-routes`); how a rendered test case is
+written (`writing-tests`) and which vitest project it joins (`placing-tests`);
+TypeScript idiom inside a module (`writing-typescript`); dropping a locale when turning
+this template into an app (`starting-an-app`).
 
 ## A tree full of Japanese is not a violation
 
@@ -150,35 +148,14 @@ module rather than hard-coding `/`.
 **BACKGROUND:** `building-app-routes` for `src/proxy.ts`'s matcher and the `[locale]`
 segment, which have to agree with each other.
 
-## The `outputLanguage` seam
-
-`LlmRequest.outputLanguage` in `src/ai/port.ts` is an open BCP 47 tag naming a language
-a model can write in. A UI locale is the closed union of the languages this application
-ships a catalog for. `OUTPUT_LANGUAGE_BY_LOCALE` in `src/server/handlers/ask.ts` is the
-only place the two vocabularies are allowed to meet, and it stays there:
-
-- Never in `src/ai/port.ts` and never in an adapter. The port knows nothing about this
-  application's catalogs, which is what keeps it vendor-neutral and the AI layer
-  removable in one piece.
-- Never in a page or a component. The locale reaches the endpoint as the `locale` field
-  of the request body, defaulted to `DEFAULT_LOCALE`.
-- The table is `as const satisfies Record<Locale, string>`, so a locale added to
-  `LOCALES` without a row fails to compile instead of silently answering in English.
-  Pinned by `tests/server-handler.test.ts`.
-- The indirection earns its keep on a locale whose tag is not its own name — a `zh`
-  catalog answered in `zh-Hans`.
-
-Shared ground with `building-app-routes`: that skill owns the handler's shape and its
-error vocabulary, this one owns which tag a locale maps to.
-
 ## Adding a locale
 
-The template ships `en` and `ja`. A third is one list read five times: `LOCALES` in
+The template ships `en` and `ja`. A third is one list read four times: `LOCALES` in
 `src/i18n/locales.ts`; a new `messages/<locale>.json` translating every key `en.json`
-holds; a static import and a `MESSAGES` entry in `src/i18n/messages.ts`; a row in
-`OUTPUT_LANGUAGE_BY_LOCALE`; and a `LocaleSwitcher.<locale>` entry in **every** catalog
-— that one is a new key, so `MESSAGE_KEYS` in `tests/messages.test.ts` gains a line too.
-Nothing under `src/app/` or in `src/proxy.ts` changes; neither names a locale.
+holds; a static import and a `MESSAGES` entry in `src/i18n/messages.ts`; and a
+`LocaleSwitcher.<locale>` entry in **every** catalog — that one is a new key, so
+`MESSAGE_KEYS` in `tests/messages.test.ts` gains a line too. Nothing under `src/app/` or
+in `src/proxy.ts` changes; neither names a locale.
 
 Locale negotiation is `next-intl`'s middleware reading the request's `Accept-Language`
 header and its locale cookie, and nothing more — no domain routing, no geolocation, no

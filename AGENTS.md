@@ -78,8 +78,7 @@ on every edit is slow enough that it stops being run at all.
 
 | What you changed                                       | The narrowest check that can fail                    |
 | ------------------------------------------------------ | ---------------------------------------------------- |
-| A module under `src/core/` or `src/ai/`                | `pnpm exec vitest run tests/<module>.test.ts`        |
-| A handler or the composition root under `src/server/`  | `pnpm exec vitest run tests/server-handler.test.ts`  |
+| A module under `src/core/`                             | `pnpm exec vitest run tests/<module>.test.ts`        |
 | `src/server/env.ts` or `.env.example`                  | `pnpm exec vitest run tests/server-env.test.ts`      |
 | A page, layout or route handler under `src/app/`       | `pnpm build`, then `pnpm test:smoke`                 |
 | A component with a rendered test                       | `pnpm exec vitest run tests/<name>.test.tsx`         |
@@ -98,8 +97,7 @@ on every edit is slow enough that it stops being run at all.
 ```
 src/
 ├── core/     # framework-free vocabulary: a Result, a domain type, a pure function
-├── ai/       # the LlmPort, its error vocabulary, and the adapters behind it
-├── server/   # the environment read, the composition root, and request handlers
+├── server/   # the environment read, and request handling machinery
 ├── i18n/     # the locale list, its URL routing, and the typed message catalogs
 ├── app/      # the Next.js App Router tree: pages, layouts, route handlers
 └── proxy.ts  # Next.js's request proxy: locale detection ahead of every page request
@@ -107,59 +105,48 @@ messages/     # one JSON catalog per locale, shaped by en.json
 scripts/      # repository automation, authored as .mjs, never shipped
 ```
 
-Imports run one way — `app` → `server` → `ai` → `core` — with `i18n` a leaf that the
-page tree and the handlers both read. `core` is the bottom of that order: it names no
-framework and no vendor SDK, so it survives a change of either.
+Imports run one way — `app` → `server` → `core` — with `i18n` a leaf that the page tree
+and the handlers both read. `core` is the bottom of that order: it names no framework,
+so it survives a change of one.
 
-### The three seams
+### The two seams
 
-Everything a project built from this template is expected to replace sits behind one of
-three seams:
-
-- **The port.** `src/ai/port.ts` declares `LlmPort`, the vendor-neutral interface every
-  model call goes through, and `src/ai/index.ts` is the AI layer's whole surface — the
-  port, its error vocabulary, and whichever adapter that file chooses to publish.
-  `src/ai/adapters/` is private to the layer, so swapping the fake for a provider, or
-  deleting the layer outright, is a bounded edit; `tests/ai-layer-removal.test.ts` is
-  what keeps the deletion bounded rather than trusting that it stays so.
-- **The Web-standard handler.** `src/server/handlers/ask.ts` exports
-  `createAskHandler(dependencies)`, which returns a plain
-  `(request: Request) => Promise<Response>` and imports nothing from `next`. That is
-  what lets a test drive it with `new Request(…)` and no framework, and what keeps
-  `src/app/api/ask/route.ts` a one-line re-export with no logic of its own to test.
+- **The Web-standard handler.** A Route Handler under `src/app/` is expected to stay a
+  thin re-export around a plain `(request: Request) => Promise<Response>` defined under
+  `src/server/`, which imports nothing from `next`. That is what lets a test drive it
+  with `new Request(…)` and no framework.
 - **The environment.** `src/server/env.ts` is the only module under `src/` that reads
   `process.env`. It validates the whole environment against one schema and hands every
   other module what it needs as an argument, so "where does this secret enter the
   process" is a question a reader answers by opening one file.
 
-`src/server/composition.ts` is where the three meet: the single place the environment,
-an adapter and a handler are joined, and the single line in this repository that names a
-vendor. That choice made anywhere else is the leak these boundaries exist to prevent.
+A composition root under `src/server/` is where these meet once this application wires
+its first handler: the single place the environment and a handler are joined. That
+choice made anywhere else is the leak these boundaries exist to prevent.
 
 ### Rate limiting
 
 This template deliberately implements neither rate limiting nor concurrency limiting for
-`POST /api/ask`. It owns no limiter state, store, algorithm, or rate-limit environment
-variable. A deployment that wires a billed adapter must enforce its caller-throughput
+any route. It owns no limiter state, store, algorithm, or rate-limit environment
+variable. A deployment that wires a billed route must enforce its caller-throughput
 policy at an edge or gateway before the request reaches the app, with enforcement shared
 across instances; a per-process limiter is not equivalent across instances.
 `API_ACCESS_KEY` is authentication only, not a rate-limit declaration.
 
-The app still owns its existing per-request request-body and prompt ceilings and rejects
-those before `llm.generate`.
+The app still owns its existing per-request request-body ceiling and rejects a body that
+crosses it before it is parsed.
 
 ### What is contract and what is private
 
 Nothing here is published, so the contract is not an export map. It is what a caller
 outside the process can observe, plus what each zone publishes to the zone above it:
 
-- **Contract.** The HTTP surface of `POST /api/ask` — its request body, its answer, and
-  the `error.code` vocabulary a client branches on. The `LlmPort` interface, `LlmError`
-  and its `ERR_LLM_*` codes, and everything else `src/ai/index.ts` names. The locale
+- **Contract.** The HTTP surface of whatever route this application ships — its request
+  body, its answer, and the `error.code` vocabulary a client branches on. The locale
   list in `src/i18n/locales.ts` and the message keys `messages/en.json` defines.
-- **Private.** `src/ai/adapters/**`; the wiring inside `src/server/composition.ts`; and
-  any module a zone's own surface does not re-export. A test reaches a private module
-  through the surface that owns it, never around it.
+- **Private.** The wiring inside a composition root under `src/server/`; and any module
+  a zone's own surface does not re-export. A test reaches a private module through the
+  surface that owns it, never around it.
 
 Next.js loads a page, layout, boundary or route handler under `src/app/` by file name
 through its default export, and does the same for `src/proxy.ts` and
@@ -183,7 +170,6 @@ names its own boundary with its neighbours.
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `building-app-routes`   | a page, layout or Route Handler under `src/app/`, `src/proxy.ts`, or `src/server/`                                                  |
 | `localizing-ui`         | a catalog under `messages/`, a module under `src/i18n/`, or adding a UI string                                                      |
-| `integrating-llm`       | the `LlmPort`, an adapter under `src/ai/`, or a fixture under `tests/fixtures/llm/`                                                 |
 | `writing-typescript`    | a `.ts` module or a `.tsx` component under `src/`                                                                                   |
 | `designing-errors`      | an error type or an `ERR_*` code, in `src/` or `scripts/`                                                                           |
 | `writing-tests`         | the body of a test under `tests/`                                                                                                   |
@@ -196,7 +182,7 @@ names its own boundary with its neighbours.
 | `merge-dependabot`      | landing open Dependabot or Renovate pull requests                                                                                   |
 | `updating-docs`         | `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, or whether a change owes a doc at all                                                  |
 | `triaging-issues`       | filing, labelling, or ranking a GitHub issue                                                                                        |
-| `starting-an-app`       | turning this template into a new app: the rename, the AI layer, the locales                                                         |
+| `starting-an-app`       | turning this template into a new app: the rename, the locales                                                                       |
 
 ## Security and human approval
 

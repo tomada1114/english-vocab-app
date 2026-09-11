@@ -4,10 +4,10 @@ description: >
   Use when writing or reviewing a test under tests/ — a .test.ts or a .test.tsx — or
   adding the regression test a src/ bug fix needs: naming an it() after behavior,
   driving a handler factory with new Request(), rendering a page under jsdom with
-  NextIntlClientProvider, running the LlmPort contract suite against an adapter,
-  asserting an error's class and `code`, not its message, sweeping edge cases with
-  it.each, choosing a fake over a mock, replacing a real sleep with vi.useFakeTimers,
-  isolating a filesystem test in mkdtempSync, or fixing a flaky or skipped test.
+  NextIntlClientProvider, asserting an error's class and `code`, not its message,
+  sweeping edge cases with it.each, choosing a fake over a mock, replacing a real sleep
+  with vi.useFakeTimers, isolating a filesystem test in mkdtempSync, or fixing a flaky
+  or skipped test.
 ---
 
 # Writing Tests
@@ -30,18 +30,16 @@ coverage floors (`placing-tests`); compile-time assertions with `expectTypeOf`
 ## Test through an interface, not around one
 
 There is no single entry point to test this application through — each zone has its own
-surface, and that surface is the seam. The four this repository ships:
+surface, and that surface is the seam. What this repository ships today:
 
-- **A handler factory, driven with a real `Request`.** `createAskHandler` in
-  `src/server/handlers/ask.ts` takes its port as an argument, so a test builds a
-  `new Request("http://localhost/api/ask", { method: "POST", body })` and asserts the
-  `Response` it gets back — status, `content-type`, and the parsed JSON body. Nothing is
-  mocked: the dependency is injected because the factory asks for it.
-  `tests/server-handler.test.ts` is the model, down to the recording wrapper it uses to
-  assert what the handler passed the port without counting calls.
-- **A Route Handler module.** `src/app/api/<name>/route.ts` re-exports a handler
+- **A handler factory, driven with a real `Request`.** A `create<Name>Handler(deps)`
+  factory under `src/server/handlers/` should take its dependencies as arguments, so a
+  test builds a `new Request("http://localhost/api/<name>", { method: "POST", body })`
+  and asserts the `Response` it gets back — status, `content-type`, and the parsed JSON
+  body. Nothing is mocked: the dependency is injected because the factory asks for it.
+- **A Route Handler module.** `src/app/api/<name>/route.ts` should re-export a handler
   composed elsewhere, so the only thing left to assert about the file itself is that
-  identity — `expect(POST).toBe(askHandler)`. Everything else is a test of the handler.
+  identity — `expect(POST).toBe(theHandler)`. Everything else is a test of the handler.
 - **A synchronous Server Component**, rendered under jsdom through Testing Library, with
   the context a Server Component tree would have supplied passed explicitly:
   `NextIntlClientProvider` with a `locale` and the real `messages/en.json`.
@@ -50,14 +48,14 @@ surface, and that surface is the seam. The four this repository ships:
   `building-app-routes` explains why hooks alone would not make it one — so what makes
   it renderable here is that it is synchronous, not that it runs on the client. An
   asynchronous Server Component is deliberately out of scope — no gate here renders one.
-- **The `LlmPort` contract suite.** `describeLlmPortContract` in `tests/ai-port.test.ts`
-  is the behavior every adapter owes, written once and called once per adapter with a
-  harness that builds the ports each case needs. A new adapter adds a call, never a
-  second copy of the assertions. A behavior every adapter must share belongs inside the
-  shared suite; a quirk of one adapter goes in its own `describe` beside it.
+- **A contract suite, when an interface gets a second implementation.** Write the
+  behavior every implementation owes once, as a function called once per implementation
+  with a harness that builds what each case needs, rather than copying the assertions
+  per implementation. A behavior every implementation must share belongs inside the
+  shared suite; a quirk of one implementation goes in its own `describe` beside it.
 
-A zone is reached through what its `index.ts` publishes — `src/ai/index.ts`, never the
-adapter underneath it. Enforced by: `eslint.config.mjs`'s
+A zone is reached through what its `index.ts` publishes, never a private module
+underneath it. Enforced by: `eslint.config.mjs`'s
 `boundaries/private-trees-are-not-importable` block. Wanting to reach past a surface to
 assert something means the module is the wrong shape, not that the test needs an
 exception.
@@ -67,16 +65,16 @@ exception.
 Assert the error class and its stable `code`, never the message text:
 
 ```ts
-expect(error).toBeInstanceOf(LlmError);
-expect(error.code).toBe("ERR_LLM_TIMEOUT");
+expect(error).toBeInstanceOf(SchemaMismatchError);
+expect(error.code).toBe("ERR_SCHEMA_MISMATCH");
 ```
 
 **BACKGROUND:** `designing-errors` explains why `message` is not a contract.
 
-A port reports an expected failure as a `Result`'s error branch rather than by throwing,
-so assert on the returned value — `rejects.toThrow` on a call that is supposed to
-resolve to a failure passes only when the contract is already broken. Check that an
-error propagates through the whole call chain (an `LlmErrorCode` reaching the HTTP
+An operation reports an expected failure as a `Result`'s error branch rather than by
+throwing, so assert on the returned value — `rejects.toThrow` on a call that is supposed
+to resolve to a failure passes only when the contract is already broken. Check that an
+error propagates through the whole call chain (a domain error code reaching the HTTP
 status a caller sees), and that cleanup runs on the failure path too, not only on
 success.
 
@@ -102,7 +100,8 @@ value outside the closed set the app ships.
 Use `it.each([...])` for input/output variations, labelled through the `%s`/`%p`
 placeholders in the title rather than a bare index. When the table is a mapping the
 source states too, close it with `as const satisfies` so a new union member fails to
-compile until the table covers it — `ALL_CODES` in `tests/ai-port.test.ts` is the model.
+compile until the table covers it — `MESSAGE_KEYS` in `tests/messages.test.ts` is the
+model.
 
 ## Fixtures and isolation
 
@@ -137,10 +136,10 @@ block, which covers `tests/**/*.ts` and `tests/**/*.tsx` alike.
 Mock only at boundaries: network, filesystem, clock, child process, randomness. Never
 mock the module under test or an internal collaborator — a test that mocks an internal
 collaborator breaks on refactor while behavior is unchanged. Prefer a real in-memory
-fake to a mock for anything beyond a one-shot call: `createFakeLlmPort` is a real
-implementation of the port, configured per case, so the code under test runs the same
-path it runs in production. Assert on behavior and captured arguments rather than call
-counts, unless the count itself is the contract.
+fake to a mock for anything beyond a one-shot call — a real implementation of the
+interface, configured per case, so the code under test runs the same path it runs in
+production. Assert on behavior and captured arguments rather than call counts, unless
+the count itself is the contract.
 
 Do not introduce an abstraction, or a fake for it, until something actually varies
 across it.
@@ -150,9 +149,8 @@ across it.
 No real `setTimeout` or sleep: `vi.useFakeTimers()` plus
 `await vi.advanceTimersByTimeAsync(ms)`, restored with `vi.useRealTimers()` in a
 `finally`. An abortable API is tested for the caller-visible effect of the abort _and_
-for the timer and listener it removes, on both outcomes — the delay cases in
-`tests/ai-port.test.ts` are the model, including the one asserting `vi.getTimerCount()`
-is back to zero after an abort.
+for the timer and listener it removes, on both outcomes, including an assertion that
+`vi.getTimerCount()` is back to zero after an abort.
 
 ## Anti-patterns
 
@@ -160,9 +158,9 @@ is back to zero after an abort.
 - `toBeDefined()`/`not.toBeNull()` where a specific value is checkable.
 - Testing that a dependency works, rather than how this application uses it.
 - Mocking so much that the real code under test never runs.
-- Pinning, in a test of one seam, a value another seam owns — a test of the composed
-  route that asserted the fake adapter's wording would have to be edited to swap the
-  adapter.
+- Pinning, in a test of one seam, a value another seam owns — a test of a composed route
+  that asserted a dependency's own wording would have to be edited to swap that
+  dependency.
 
 ## Property-based testing
 
