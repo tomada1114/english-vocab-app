@@ -93,20 +93,7 @@ const PLACEHOLDERS = [
  * security-advisory link have to resolve *while this repository is the
  * template*, and a fork replaces them like any other row.
  */
-const EXPECTED_INVENTORY = [
-  ".github/ISSUE_TEMPLATE/config.yml: tomada1114/nextjs-app-template",
-  "LICENSE: Your Name",
-  "README.md: A short description.",
-  "README.md: Your Name",
-  "README.md: my-package",
-  "README.md: tomada1114/nextjs-app-template",
-  "messages/en.json: An App Router skeleton.",
-  "messages/en.json: Next.js App Template",
-  "messages/ja.json: App Router のひな形です。",
-  "messages/ja.json: Next.js アプリテンプレート",
-  "package.json: A short description.",
-  "package.json: my-package",
-];
+const EXPECTED_INVENTORY: string[] = [];
 
 /**
  * This file, which necessarily spells out every placeholder it looks for.

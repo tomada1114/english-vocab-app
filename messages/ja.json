@@ -1,10 +1,10 @@
 {
   "Metadata": {
-    "title": "Next.js アプリテンプレート",
-    "description": "App Router のひな形です。"
+    "title": "英単語カード",
+    "description": "個人用の英単語カードアプリです。"
   },
   "HomePage": {
-    "title": "Next.js アプリテンプレート",
+    "title": "英単語カード",
     "intro": "App Router のひな形を{language}で表示しています。",
     "localeCount": "{count, plural, other {このテンプレートには # 言語が含まれています。}}"
   },

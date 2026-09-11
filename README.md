@@ -1,8 +1,8 @@
-# my-package
+# english-vocab-app
 
-[![CI](https://github.com/tomada1114/nextjs-app-template/actions/workflows/ci.yml/badge.svg)](https://github.com/tomada1114/nextjs-app-template/actions/workflows/ci.yml)
+[![CI](https://github.com/tomada1114/english-vocab-app/actions/workflows/ci.yml/badge.svg)](https://github.com/tomada1114/english-vocab-app/actions/workflows/ci.yml)
 
-A short description.
+A personal, local-only English vocabulary card app with FSRS scheduling.
 
 ## What this is
 
@@ -83,4 +83,4 @@ change is held to.
 
 ## License
 
-[MIT](LICENSE) © Your Name
+[MIT](LICENSE) © tomada
