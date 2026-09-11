@@ -51,6 +51,12 @@
   color: cccccc
   description: "Not implementable as filed, or parked pending something outside the tracker."
 
+# Model-fit label: added at triage when a lightweight model can ship the issue
+# from its body alone. Independent of priority and of the blocked labels.
+- name: "model: light"
+  color: 0e8a16
+  description: "Design settled, small, low-judgment: a light model can ship it as written."
+
 # Labels applied by .github/workflows/pr-label.yml from a PR's Conventional
 # Commit type. Never used for issue triage.
 - name: dependencies

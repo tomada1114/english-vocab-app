@@ -1,13 +1,13 @@
 ---
 name: triaging-issues
 description: >
-  Covers this repository's issue vocabulary: the type and priority label taxonomy in
-  .github/labels.yml, what `blocked: design`, `blocked: dependency`, and `on hold` mean,
-  and what an issue body must contain (a `path:line`, an observable close condition, a
-  `Depends on: #N` line). Use when filing a GitHub issue, triaging or re-prioritizing
-  the backlog, picking a `priority: P0`-`P3` label, choosing between
-  `bug`/`enhancement`/ `documentation`/`chore`/`security`, or running `pnpm
-  repo:labels`.
+  Covers this repository's issue vocabulary: the type, priority, and model-fit label
+  taxonomy in .github/labels.yml, what `blocked: design`, `blocked: dependency`, `on
+  hold`, and `model: light` mean, and what an issue body must contain (a `path:line`, an
+  observable close condition, a `Depends on: #N` line). Use when filing a GitHub issue,
+  triaging or re-prioritizing the backlog, picking a `priority: P0`-`P3` label, deciding
+  whether an issue is `model: light`, choosing between
+  `bug`/`enhancement`/`documentation`/`chore`/`security`, or running `pnpm repo:labels`.
 ---
 
 # Triaging Issues
@@ -18,7 +18,7 @@ workflow beyond the tracker.
 
 Labels carry the triage decision, so it is made once and read back rather than
 re-derived every time the backlog is looked at. An issue is filed with a type label and
-left untiered; triage adds the priority.
+left untiered; triage adds the priority, and `model: light` where it fits.
 
 ## Priority labels
 
@@ -43,6 +43,33 @@ re-derived later without redoing the judgement.
 A label that turns out to be wrong gets corrected, not worked around. Ranking around a
 stale label in your head leaves the next reader to make the same mistake — fix the label
 instead of mentally overriding it.
+
+## The model-fit label
+
+`model: light` marks an issue a lightweight model can ship from its body alone without
+the result suffering: the thinking is done and only execution is left. Automation routes
+work on it — `shipping-issues light` ships only these issues — so a false positive sends
+a weak model into judgment work, while a false negative only costs a stronger model.
+When in doubt, leave it off.
+
+Apply it only when all three hold:
+
+- **The design is settled.** No `blocked: design`, and no open question left in the
+  body: it names the files or modules, the shape of the change, and the close condition.
+  A body that asks to decide, measure and choose, tune, or consider something fails
+  this.
+- **The change is small.** One coherent PR of a handful of files, following a pattern
+  the repository already has.
+- **Little is left to judge.** The close condition is a test or command that passes. Not
+  foundational work — a schema, a shared type vocabulary, a port, an error taxonomy, a
+  skeleton, or a skill or gate later issues copy — and not work whose output quality is
+  the judgment, such as generating content, tuning a prompt, or choosing a model from a
+  measurement.
+
+Priority and `blocked: dependency` are independent of it: a light issue still gets its
+real tier, and one waiting on a blocker can carry both labels, because readiness is
+judged separately. Remove the label when the issue grows an open question or its scope
+widens.
 
 ## Type labels
 
