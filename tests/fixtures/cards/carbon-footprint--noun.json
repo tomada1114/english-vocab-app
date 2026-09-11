@@ -1,0 +1,14 @@
+{
+  "id": "carbon-footprint--noun",
+  "headword": "carbon footprint",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the amount of greenhouse gas a person or an activity releases",
+  "cloze": "Cycling to work is one way to cut your ___.",
+  "examples": [
+    "The airline published its carbon footprint for every route.",
+    "A short flight leaves a larger carbon footprint than a train ride."
+  ]
+}
