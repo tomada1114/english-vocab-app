@@ -10,23 +10,39 @@ import type { NewSession, ReviewRecord, SchedulingState } from "./records";
 // column its statement takes, so a column added in a migration fails to
 // compile here rather than binding to nothing at run time.
 
+// The standard library types `stringify` as returning `string`, which is
+// untrue for exactly the values `toJson` guards against. This has no
+// annotation of its own, so the cast below is what gives its result type
+// `undefined` at all — an explicit return-type annotation here would make
+// TypeScript treat the cast as redundant and narrow the `undefined` back out.
+function stringifyOrUndefined(value: unknown) {
+  return JSON.stringify(value) as string | undefined;
+}
+
 /**
  * `value` as the JSON a TEXT column stores.
  *
  * @param value - Anything with a JSON form; `scope`, or a setting's value.
  * @param subject - What is being stored, for the message; never the value.
- * @throws A {@link DatabaseError} coded `ERR_DB_VALUE_INVALID` when `value` has
- * no JSON form at all — `undefined`, a function, a symbol — which
- * `JSON.stringify` reports by returning nothing rather than by raising.
+ * @throws A {@link DatabaseError} coded `ERR_DB_VALUE_UNSERIALIZABLE` when
+ * `value` has no JSON form at all: `JSON.stringify` reports that by returning
+ * nothing for `undefined`, a function or a symbol, and by raising for a
+ * circular reference or a `BigInt`. Both are caught here.
  */
 export function toJson(value: unknown, subject: string): string {
-  // The standard library types `stringify` as returning `string`, which is
-  // untrue for exactly the values this guards against. Widening it back is
-  // what keeps the check below from being reported as dead code.
-  const text = JSON.stringify(value) as string | undefined;
+  let text: string | undefined;
+  try {
+    text = stringifyOrUndefined(value);
+  } catch (cause) {
+    throw new DatabaseError(
+      "ERR_DB_VALUE_UNSERIALIZABLE",
+      `${subject} has no JSON representation and cannot be stored.`,
+      { cause },
+    );
+  }
   if (text === undefined) {
     throw new DatabaseError(
-      "ERR_DB_VALUE_INVALID",
+      "ERR_DB_VALUE_UNSERIALIZABLE",
       `${subject} has no JSON representation and cannot be stored.`,
     );
   }

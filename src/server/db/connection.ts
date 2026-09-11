@@ -24,14 +24,19 @@ const IN_MEMORY = ":memory:";
  * question answered by one file. `tests/boundaries.test.ts` holds that to
  * `src/server/db/` from the module graph.
  *
- * Three things happen in a fixed order, and the order is the point. The parent
+ * Four things happen in a fixed order, and the order is the point. The parent
  * directory is created first, because the default path is `.data/`, which is
  * gitignored and therefore absent in a fresh checkout — without this, the first
  * page load of a new clone fails on a missing directory rather than starting a
  * database. WAL comes next and outside any transaction, since SQLite refuses a
  * journal-mode change inside one; it is what lets a reader (a page rendering
- * progress) run while a writer (a rating being recorded) commits. The
- * migrations come last, so a connection handed back is one whose tables exist.
+ * progress) run while a writer (a rating being recorded) commits. A busy
+ * timeout follows: `node:sqlite` opens with none set, so two write
+ * transactions that overlap by even a moment — two tabs rating a card near
+ * the same instant — would otherwise fail immediately with `SQLITE_BUSY`
+ * rather than one briefly waiting for the other, which is the whole point of
+ * letting a writer and a reader overlap under WAL. The migrations come last,
+ * so a connection handed back is one whose tables exist.
  *
  * It throws rather than returning a `Result`, for the reason `src/server/env.ts`
  * gives: a database that cannot be opened or migrated is a deployment fault
@@ -52,9 +57,15 @@ export function openDatabase(file: string): DatabaseSync {
   const database = new DatabaseSync(file);
   try {
     database.exec("PRAGMA journal_mode = WAL");
+    database.exec("PRAGMA busy_timeout = 5000");
     applyMigrations(database);
   } catch (cause) {
-    database.close();
+    try {
+      database.close();
+    } catch {
+      // The connection is already in a bad enough state that closing it
+      // failed too; `cause` below is still the failure that matters.
+    }
     throw cause;
   }
   return database;

@@ -222,6 +222,35 @@ describe("withTransaction", () => {
     expect(error).toBe(failure);
     expect(database.isTransaction).toBe(false);
   });
+
+  it("refuses to nest, rather than let SQLite raise its own less specific error", () => {
+    const { database } = openStore();
+    database.exec("BEGIN");
+
+    const error = thrown(() => withTransaction(database, () => undefined));
+
+    expect(error).toBeInstanceOf(Error);
+    expect(String(error)).toContain("does not support nesting");
+    // The guard fires before touching BEGIN or ROLLBACK, so the caller's own
+    // already-open transaction is exactly as it left it.
+    expect(database.isTransaction).toBe(true);
+    database.exec("ROLLBACK");
+  });
+
+  it("rolls the whole composed operation back when one step nests by mistake", () => {
+    const { database, store } = openStore();
+
+    const error = thrown(() =>
+      withTransaction(database, () => {
+        store.setSetting("newCardsPerDay", 10);
+        withTransaction(database, () => undefined);
+      }),
+    );
+
+    expect(error).toBeInstanceOf(Error);
+    expect(database.isTransaction).toBe(false);
+    expect(store.getSetting("newCardsPerDay", z.number())).toBeUndefined();
+  });
 });
 
 describe("listReviewLogs", () => {
@@ -348,7 +377,28 @@ describe("sessions", () => {
     );
 
     expect(error).toBeInstanceOf(DatabaseError);
-    expect(error).toMatchObject({ code: "ERR_DB_VALUE_INVALID" });
+    expect(error).toMatchObject({ code: "ERR_DB_VALUE_UNSERIALIZABLE" });
+  });
+
+  // `JSON.stringify` returns `undefined` for `undefined`, a function or a
+  // symbol (the case above), but *raises* for a circular reference or a
+  // `BigInt` instead — a second failure shape `toJson` catches separately.
+  it("refuses a scope with a circular reference, which JSON.stringify raises on rather than returning undefined for", () => {
+    const store = newStore();
+    const circular: Record<string, unknown> = {};
+    circular["self"] = circular;
+
+    const error = thrown(() =>
+      store.createSession({
+        startedAt: REVIEWED_AT,
+        scope: circular,
+        newLimit: 10,
+        rememberedBefore: 0,
+      }),
+    );
+
+    expect(error).toBeInstanceOf(DatabaseError);
+    expect(error).toMatchObject({ code: "ERR_DB_VALUE_UNSERIALIZABLE" });
   });
 
   it("reports a scope column that is not JSON", () => {
@@ -359,7 +409,7 @@ describe("sessions", () => {
     const error = thrown(() => store.getSession(id));
 
     expect(error).toBeInstanceOf(DatabaseError);
-    expect(error).toMatchObject({ code: "ERR_DB_VALUE_INVALID" });
+    expect(error).toMatchObject({ code: "ERR_DB_VALUE_CORRUPT" });
   });
 });
 
@@ -405,7 +455,7 @@ describe("settings", () => {
     });
 
     expect(error).toBeInstanceOf(DatabaseError);
-    expect(error).toMatchObject({ code: "ERR_DB_VALUE_INVALID" });
+    expect(error).toMatchObject({ code: "ERR_DB_VALUE_UNSERIALIZABLE" });
   });
 
   it("reports a stored value the caller's schema does not describe", () => {
@@ -415,7 +465,7 @@ describe("settings", () => {
     const error = thrown(() => store.getSetting("newCardsPerDay", newCardsPerDay));
 
     expect(error).toBeInstanceOf(DatabaseError);
-    expect(error).toMatchObject({ code: "ERR_DB_VALUE_INVALID" });
+    expect(error).toMatchObject({ code: "ERR_DB_VALUE_SCHEMA_MISMATCH" });
   });
 
   it("reports a stored value that is not JSON at all", () => {
@@ -425,7 +475,7 @@ describe("settings", () => {
     const error = thrown(() => store.getSetting("scope", z.unknown()));
 
     expect(error).toBeInstanceOf(DatabaseError);
-    expect(error).toMatchObject({ code: "ERR_DB_VALUE_INVALID" });
+    expect(error).toMatchObject({ code: "ERR_DB_VALUE_CORRUPT" });
   });
 
   it("names the key in the message and never the value that was stored", () => {

@@ -136,6 +136,14 @@ describe("openDatabase over a fresh file", () => {
 
     expect(readUserVersion(database)).toBe(MIGRATIONS.length);
   });
+
+  it("sets a busy timeout, so a briefly overlapping writer waits instead of failing", () => {
+    const database = open(temporaryDatabasePath("vocab.sqlite"));
+
+    expect(database.prepare("PRAGMA busy_timeout").get()).toEqual({
+      timeout: 5000,
+    });
+  });
 });
 
 describe("openDatabase over a file that is already migrated", () => {
@@ -180,6 +188,23 @@ describe("openDatabase over a file it cannot migrate", () => {
 
     expect(error).toBeInstanceOf(DatabaseError);
     expect(error).toMatchObject({ code: "ERR_DB_VERSION_AHEAD" });
+  });
+
+  // SQLite stores `user_version` as a signed integer and accepts a negative
+  // one; nothing this application writes ever sets one, so a file recording
+  // one was tampered with or corrupted outside it. `MIGRATIONS.slice(current)`
+  // would otherwise use JavaScript's negative-index slicing and silently apply
+  // only the last few migrations instead of raising.
+  it("reports a negative user_version as ERR_DB_MIGRATION rather than misreading it", () => {
+    const file = temporaryDatabasePath("vocab.sqlite");
+    const tampered = openRaw(file);
+    tampered.exec("PRAGMA user_version = -1");
+    tampered.close();
+
+    const error = thrown(() => open(file));
+
+    expect(error).toBeInstanceOf(DatabaseError);
+    expect(error).toMatchObject({ code: "ERR_DB_MIGRATION" });
   });
 
   it("reports a migration that raised as ERR_DB_MIGRATION", () => {

@@ -71,8 +71,8 @@ export const MIGRATIONS: readonly string[] = [
   `,
 ];
 
-/** `PRAGMA user_version` as SQLite answers it. */
-const userVersionRow = z.object({ user_version: z.int() });
+/** `PRAGMA user_version` as SQLite answers it: never negative, this app never writes one. */
+const userVersionRow = z.object({ user_version: z.int().nonnegative() });
 
 /**
  * Brings `database` up to {@link MIGRATIONS}, applying only what is missing.
@@ -92,10 +92,20 @@ const userVersionRow = z.object({ user_version: z.int() });
  * @returns The version the file is at afterwards.
  * @throws A {@link DatabaseError} coded `ERR_DB_VERSION_AHEAD` when the file
  * was written by a build with more migrations than this one has, or
- * `ERR_DB_MIGRATION` when a pending migration raised.
+ * `ERR_DB_MIGRATION` when a pending migration raised, or `readUserVersion`
+ * could not make sense of what `PRAGMA user_version` answered.
  */
 export function applyMigrations(database: DatabaseSync): number {
-  const current = readUserVersion(database);
+  let current: number;
+  try {
+    current = readUserVersion(database);
+  } catch (cause) {
+    throw new DatabaseError(
+      "ERR_DB_MIGRATION",
+      "PRAGMA user_version did not answer a usable migration count.",
+      { cause },
+    );
+  }
   if (current > MIGRATIONS.length) {
     throw new DatabaseError(
       "ERR_DB_VERSION_AHEAD",

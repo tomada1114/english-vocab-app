@@ -69,8 +69,9 @@ export interface Store {
   /**
    * The stored setting, or `undefined` when the key was never set.
    *
-   * @throws A {@link DatabaseError} coded `ERR_DB_VALUE_INVALID` when the
-   * stored JSON is not what `schema` describes.
+   * @throws A {@link DatabaseError} coded `ERR_DB_VALUE_CORRUPT` when the
+   * stored text is not valid JSON, or `ERR_DB_VALUE_SCHEMA_MISMATCH` when it
+   * parses but does not match `schema`.
    */
   getSetting<T>(key: string, schema: ZodType<T>): T | undefined;
   /** Stores `value` as JSON, replacing whatever the key held. */
@@ -175,7 +176,7 @@ export function createStore(database: DatabaseSync): Store {
       const parsed = schema.safeParse(fromJson(toSettingJson(row), subject));
       if (!parsed.success) {
         throw new DatabaseError(
-          "ERR_DB_VALUE_INVALID",
+          "ERR_DB_VALUE_SCHEMA_MISMATCH",
           `${subject} does not match the schema the caller asked for.`,
           { cause: parsed.error },
         );

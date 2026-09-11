@@ -127,13 +127,13 @@ export function toTally(row: unknown): number {
  *
  * @param text - JSON this application wrote into a TEXT column.
  * @param subject - What failed to read back, for the message; never a value.
- * @throws A {@link DatabaseError} coded `ERR_DB_VALUE_INVALID`.
+ * @throws A {@link DatabaseError} coded `ERR_DB_VALUE_CORRUPT`.
  */
 export function fromJson(text: string, subject: string): unknown {
   try {
     return JSON.parse(text) as unknown;
   } catch (cause) {
-    throw new DatabaseError("ERR_DB_VALUE_INVALID", `${subject} is not valid JSON.`, {
+    throw new DatabaseError("ERR_DB_VALUE_CORRUPT", `${subject} is not valid JSON.`, {
       cause,
     });
   }
