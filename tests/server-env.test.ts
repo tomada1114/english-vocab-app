@@ -81,12 +81,20 @@ describe(".env.example", () => {
   });
 });
 
+// Every assertion on the whole returned object carries VOCAB_DB_PATH, because
+// it is the one name that always resolves: absent or blank, it is the default
+// path rather than `undefined`, which is what keeps the fallback written down
+// once (src/server/env.ts) instead of at every call site.
+const DEFAULT_DATABASE_PATH = ".data/english-vocab.sqlite";
+
 describe("readServerEnv", () => {
   it("returns the value of a variable that is set", () => {
     vi.stubEnv("API_ACCESS_KEY", "an-example-access-key");
+    vi.stubEnv("VOCAB_DB_PATH", undefined);
 
     expect(readServerEnv({ requiresAccessKey: false })).toStrictEqual({
       API_ACCESS_KEY: "an-example-access-key",
+      VOCAB_DB_PATH: DEFAULT_DATABASE_PATH,
     });
   });
 
@@ -98,9 +106,11 @@ describe("readServerEnv", () => {
 
   it("treats a blank variable as absent, so a copied .env.example still boots", () => {
     vi.stubEnv("API_ACCESS_KEY", "   ");
+    vi.stubEnv("VOCAB_DB_PATH", "   ");
 
     expect(readServerEnv({ requiresAccessKey: false })).toStrictEqual({
       API_ACCESS_KEY: undefined,
+      VOCAB_DB_PATH: DEFAULT_DATABASE_PATH,
     });
   });
 
@@ -110,17 +120,48 @@ describe("readServerEnv", () => {
   // the exact configured value.
   it("trims a configured value, so a pasted newline is not part of the credential", () => {
     vi.stubEnv("API_ACCESS_KEY", " an-example-access-key ");
+    vi.stubEnv("VOCAB_DB_PATH", undefined);
 
     expect(readServerEnv({ requiresAccessKey: true })).toStrictEqual({
       API_ACCESS_KEY: "an-example-access-key",
+      VOCAB_DB_PATH: DEFAULT_DATABASE_PATH,
     });
   });
 
   it("ignores environment variables it does not declare", () => {
     vi.stubEnv("API_ACCESS_KEY", undefined);
+    vi.stubEnv("VOCAB_DB_PATH", undefined);
     vi.stubEnv("SOME_UNDECLARED_VARIABLE", "present");
 
-    expect(readServerEnv({ requiresAccessKey: false })).toStrictEqual({});
+    expect(readServerEnv({ requiresAccessKey: false })).toStrictEqual({
+      VOCAB_DB_PATH: DEFAULT_DATABASE_PATH,
+    });
+  });
+});
+
+describe("readServerEnv and the database path", () => {
+  it("falls back to the gitignored .data/ file when nothing is set", () => {
+    vi.stubEnv("VOCAB_DB_PATH", undefined);
+
+    expect(readServerEnv({ requiresAccessKey: false }).VOCAB_DB_PATH).toBe(
+      DEFAULT_DATABASE_PATH,
+    );
+  });
+
+  it("uses a configured path as given", () => {
+    vi.stubEnv("VOCAB_DB_PATH", "/tmp/scratch-vocab.sqlite");
+
+    expect(readServerEnv({ requiresAccessKey: false }).VOCAB_DB_PATH).toBe(
+      "/tmp/scratch-vocab.sqlite",
+    );
+  });
+
+  it("trims a configured path, so a pasted newline is not part of it", () => {
+    vi.stubEnv("VOCAB_DB_PATH", "  /tmp/scratch-vocab.sqlite\n");
+
+    expect(readServerEnv({ requiresAccessKey: false }).VOCAB_DB_PATH).toBe(
+      "/tmp/scratch-vocab.sqlite",
+    );
   });
 });
 
@@ -197,9 +238,11 @@ describe("readServerEnv with nothing billed wired", () => {
 
   it("accepts an API_ACCESS_KEY on its own", () => {
     vi.stubEnv("API_ACCESS_KEY", "an-example-access-key");
+    vi.stubEnv("VOCAB_DB_PATH", undefined);
 
     expect(readServerEnv({ requiresAccessKey: false })).toStrictEqual({
       API_ACCESS_KEY: "an-example-access-key",
+      VOCAB_DB_PATH: DEFAULT_DATABASE_PATH,
     });
   });
 });

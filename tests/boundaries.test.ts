@@ -281,6 +281,30 @@ describe("src/ imports run one way, app → server → core", () => {
   });
 });
 
+describe("node:sqlite is reached from one directory only", () => {
+  // The database is opened in `src/server/db/` and nowhere else, so "where
+  // does this application talk to SQLite, and with what settings" is a
+  // question one directory answers. A page or a handler that imported the
+  // driver directly would open a second connection with none of the pragmas
+  // `openDatabase` applies.
+  const zone = "src/server/db";
+
+  /** Every module importing `node:sqlite`, whatever the spelling. */
+  const importers = sourceModules
+    .filter((module) =>
+      module.specifiers.some((specifier) => importsPackage(specifier, "node:sqlite")),
+    )
+    .map((module) => module.file);
+
+  it("is imported by nothing outside src/server/db/", () => {
+    expect(importers.filter((file) => !inZone(file, zone))).toStrictEqual([]);
+  });
+
+  it("is imported by something inside it, so the rule is not vacuous", () => {
+    expect(importers.length).toBeGreaterThan(0);
+  });
+});
+
 describe("src/core/ is framework-free", () => {
   // The zone holds the vocabulary the other zones are written in. A framework
   // import here makes that vocabulary un-reusable and un-testable without the

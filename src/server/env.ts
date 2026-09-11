@@ -28,6 +28,34 @@ const optionalSetting = z
   .optional();
 
 /**
+ * Where the SQLite file lives when `VOCAB_DB_PATH` says nothing.
+ *
+ * @remarks
+ * Relative to the working directory, and gitignored: the database is one
+ * person's review history, never part of the checkout. `src/server/db/`
+ * creates the directory on open, so a fresh clone needs no setup step.
+ */
+const DEFAULT_DATABASE_PATH = ".data/english-vocab.sqlite";
+
+/**
+ * The database file, which is a path rather than a credential.
+ *
+ * @remarks
+ * Unlike {@link optionalSetting}, an absent or blank value resolves to
+ * {@link DEFAULT_DATABASE_PATH} rather than to `undefined`: there is always a
+ * database, and a caller that had to supply the fallback itself would be the
+ * second place the default is written down. It is still trimmed, because a
+ * path pasted with a trailing newline is not a directory anyone meant.
+ */
+const databasePath = z
+  .string()
+  .optional()
+  .transform((raw) => {
+    const value = raw?.trim() ?? "";
+    return value === "" ? DEFAULT_DATABASE_PATH : value;
+  });
+
+/**
  * Every environment variable this application reads.
  *
  * @remarks
@@ -53,6 +81,16 @@ const serverEnvShape = z.object({
    * request reaches the app. See `building-app-routes` for that guidance.
    */
   API_ACCESS_KEY: optionalSetting,
+
+  /**
+   * The SQLite file the vocabulary store opens.
+   *
+   * @remarks
+   * Optional, and always resolved: see {@link databasePath}. It exists so a
+   * second checkout, a scratch database, or a backup taken with `db:backup`
+   * can be pointed somewhere else without editing code.
+   */
+  VOCAB_DB_PATH: databasePath,
 });
 
 /** The validated environment, as the rest of `src/server/` sees it. */
