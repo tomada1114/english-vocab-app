@@ -24,6 +24,7 @@ const fixtures = "tests/fixtures/**";
 const automationTests = [
   "tests/boundaries.test.ts",
   "tests/card-loader.test.ts",
+  "tests/card-skills.test.ts",
   "tests/check-staged.test.ts",
   "tests/ci-sync.test.ts",
   "tests/clean.test.ts",

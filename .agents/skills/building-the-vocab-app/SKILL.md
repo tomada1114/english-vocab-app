@@ -15,8 +15,8 @@ description: >
 **Owns:** the product vocabulary and the decisions specific to this app, cut from
 `nextjs-app-template`. **Does not own:** zone boundaries and the Route Handler shape
 (`building-app-routes`), the catalog mechanics (`localizing-ui`), error-code naming
-(`designing-errors`), and the procedure for writing and reviewing cards (the
-`generating-cards` and `reviewing-cards` skills, once they exist).
+(`designing-errors`), the procedure for reviewing a batch of cards (`reviewing-cards`),
+and the procedure for writing one (the `generating-cards` skill, once it exists).
 
 This repository keeps no `docs/` tree. This skill and its references are the design of
 record: a change to a decision here is made in the same pull request that changes the

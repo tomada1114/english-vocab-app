@@ -168,6 +168,7 @@ names its own boundary with its neighbours.
 | Skill                    | Load it when you are working on                                                                                                     |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `building-the-vocab-app` | card data or its schema, the card Lint, the SQLite store, scheduling, sessions, progress numbers, or a screen of this app           |
+| `reviewing-cards`        | reviewing a batch of cards: the blind-answer run, the perspective run, and their verdicts                                           |
 | `building-app-routes`    | a page, layout or Route Handler under `src/app/`, `src/proxy.ts`, or `src/server/`                                                  |
 | `localizing-ui`          | a catalog under `messages/`, a module under `src/i18n/`, or adding a UI string                                                      |
 | `writing-typescript`     | a `.ts` module or a `.tsx` component under `src/`                                                                                   |
