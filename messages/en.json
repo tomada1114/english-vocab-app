@@ -7,6 +7,24 @@
     "title": "English Vocab",
     "intro": "Your vocabulary deck and review progress will appear here."
   },
+  "StudyPage": {
+    "title": "Study",
+    "loading": "Starting your session…",
+    "error": "The session could not be loaded. Reload the page to try again.",
+    "reveal": "Show the answer",
+    "hint": "Space or Enter reveals the answer, 1 to 4 rate it, Esc ends the session.",
+    "remaining": "{count, plural, one {# card left} other {# cards left}}",
+    "again": "Again",
+    "hard": "Hard",
+    "good": "Good",
+    "easy": "Easy"
+  },
+  "SummaryPage": {
+    "title": "Session summary",
+    "reviewed": "{count, plural, one {Reviewed # card} other {Reviewed # cards}}",
+    "remembered": "Remembered {before} → {after}",
+    "homeLink": "Back to the home page"
+  },
   "NotFound": {
     "title": "Page not found",
     "description": "The page you requested does not exist.",
