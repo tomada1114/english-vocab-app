@@ -1,6 +1,19 @@
 import { err, ok, type Result } from "../core/result";
 
 /**
+ * What every handler behind a Route Handler is: Web-standard in, Web-standard
+ * out.
+ *
+ * @remarks
+ * Named here rather than per handler module so a composition root can state
+ * what it wires without importing one of them for its type, and so a test can
+ * hold a built handler in a variable of the same shape the route re-exports.
+ * Nothing from `next` appears in it, which is what lets a test drive one with
+ * a plain `new Request(...)`.
+ */
+export type RequestHandler = (request: Request) => Promise<Response>;
+
+/**
  * The most bytes a request body may carry before it is refused part-read.
  *
  * @remarks

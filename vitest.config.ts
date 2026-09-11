@@ -41,6 +41,10 @@ const automationTests = [
   "tests/placeholders.test.ts",
   "tests/repo-tree.test.ts",
   "tests/server-env.test.ts",
+  // Drives the composition root, which reads `data/cards/` off the real
+  // checkout. Its database half stays in memory (`VOCAB_DB_PATH=:memory:`),
+  // so what is listed here is the directory read, not a file it writes.
+  "tests/session-composition.test.ts",
   "tests/skills-frontmatter.test.ts",
   "tests/sync-agents.test.ts",
   "tests/sync-labels.test.ts",
