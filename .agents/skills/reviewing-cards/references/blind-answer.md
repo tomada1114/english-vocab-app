@@ -16,9 +16,11 @@ This is the whole mechanism of the lens: a reviewer who has seen the answer cann
 seeing it, and will report every front as unambiguous because to them it is. The run has
 to be able to get the card wrong.
 
-Because the run does not know the headword, it does not decide the card's fate either.
-It reports which words fit; the calling session compares that list against the real
-headword.
+Because the run does not know the headword, its own findings can only catch the
+ambiguity a word list makes visible by itself — more than one word fitting, or none. For
+those cases it reports a self-judged `FIX` or `DROP`. What it cannot do is tell a
+correct single answer from a confidently wrong one: the calling session still has to
+compare every list against the real headword, the silent one-word cards most of all.
 
 ## The prompt
 
@@ -77,9 +79,12 @@ Compare each card's `words` against its real headword:
 | Empty                                    | `FIX` — the front is unanswerable as written |
 | Only true synonyms of the headword       | `DROP` if no wording separates them          |
 
-A run that files its own `FIX` for an ambiguous card has done the caller's arithmetic
-already; the last two rows are the ones only the caller can see, because they turn on
-the headword.
+A run's own finding already covers the ambiguous and empty rows (two, four and five): it
+emits `FIX` or `DROP` for every card whose word list is not exactly one word, judging
+`DROP` itself when nothing could separate the synonyms. The dangerous row is the third:
+it produces no finding at all, because one word fitting looks like a pass to the run.
+Only comparing that one word against the real headword — for every card the run stayed
+silent on — catches a front that confidently answers a different question.
 
 **Narrow in the front, never elsewhere.** A card has no hint field, so the only places
 to add the distinguishing detail are the definition and the cloze:
