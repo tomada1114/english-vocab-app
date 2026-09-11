@@ -23,6 +23,7 @@ const fixtures = "tests/fixtures/**";
 // cover.
 const automationTests = [
   "tests/boundaries.test.ts",
+  "tests/card-loader.test.ts",
   "tests/check-staged.test.ts",
   "tests/ci-sync.test.ts",
   "tests/clean.test.ts",

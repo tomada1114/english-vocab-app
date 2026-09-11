@@ -1,0 +1,15 @@
+{
+  "id": "unknown-key--noun",
+  "headword": "unknown key",
+  "pos": "noun",
+  "level": "B1",
+  "purposes": ["ielts"],
+  "topics": ["work"],
+  "definition": "a field the strict schema does not declare",
+  "cloze": "The file carries an ___ the loader must refuse.",
+  "examples": [
+    "An unknown key is a misspelled field name.",
+    "A card with an unknown key never reaches a session."
+  ],
+  "note": "this key is not part of the card schema"
+}

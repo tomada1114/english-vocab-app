@@ -1,0 +1,15 @@
+{
+  "id": "well-being--noun",
+  "headword": "well-being",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "the state of being healthy, comfortable and happy",
+  "cloze": "The company measures the ___ of its staff twice a year.",
+  "examples": [
+    "Regular sleep has a clear effect on well-being.",
+    "The charity works on the well-being of children in care."
+  ],
+  "retired": true
+}

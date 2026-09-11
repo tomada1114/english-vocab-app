@@ -1,0 +1,14 @@
+{
+  "id": "elsewhere--noun",
+  "headword": "elsewhere",
+  "pos": "noun",
+  "level": "B1",
+  "purposes": ["ielts"],
+  "topics": ["work"],
+  "definition": "a card whose file name is not the id it declares",
+  "cloze": "The id in this file belongs to a file stored ___.",
+  "examples": [
+    "A misfiled card breaks the one file per id rule.",
+    "The loader reports the file rather than loading it."
+  ]
+}
