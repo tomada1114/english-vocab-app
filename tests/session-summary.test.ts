@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { openDatabase } from "../src/server/db/connection";
 import { createStore, type Store } from "../src/server/db/queries";
 import { countSessionReviews, createSessionSummaryReader } from "../src/server/summary";
+import type { ReviewSnapshot } from "../src/server/db/records";
 
 // What the summary screen reads. Every figure comes back out of the rows the
 // session left behind rather than being recomputed, so these cases are about
@@ -36,7 +37,12 @@ function openSession(store: Store, rememberedBefore: number): number {
 }
 
 function rate(store: Store, sessionId: number, cardId: string): void {
-  const snapshot = { state: 0, due: NOW, stability: 0, difficulty: 0 };
+  const snapshot: ReviewSnapshot = {
+    state: 0,
+    due: NOW,
+    stability: 0,
+    difficulty: 0,
+  };
   store.recordReview({
     sessionId,
     cardId,

@@ -2,6 +2,7 @@ import "server-only";
 
 import * as z from "zod";
 
+import type { Rating, SchedulerPhase } from "../../core/scheduler";
 import { DatabaseError } from "./errors";
 import type { CardState, ReviewLog, Session } from "./records";
 
@@ -12,6 +13,19 @@ import type { CardState, ReviewLog, Session } from "./records";
 // camelCase records `records.ts` publishes. The tables are STRICT (see
 // `migrations.ts`), so a schema failing here means the file was written by
 // something other than this application.
+
+/**
+ * SQLite's STRICT INTEGER columns establish integer-ness, not a closed
+ * scheduler union. Keep that existing boundary contract; session handling
+ * owns the fallback for an integer written by a future or foreign version.
+ */
+function asSchedulerPhase(value: number): SchedulerPhase {
+  return value as SchedulerPhase;
+}
+
+function asRating(value: number): Rating {
+  return value as Rating;
+}
 
 const cardStateRow = z
   .object({
@@ -35,7 +49,7 @@ const cardStateRow = z
     learningSteps: row.learning_steps,
     reps: row.reps,
     lapses: row.lapses,
-    state: row.state,
+    state: asSchedulerPhase(row.state),
     lastReview: row.last_review,
   }));
 
@@ -59,16 +73,16 @@ const reviewLogRow = z
     id: row.id,
     cardId: row.card_id,
     sessionId: row.session_id,
-    rating: row.rating,
+    rating: asRating(row.rating),
     reviewedAt: row.reviewed_at,
     before: {
-      state: row.state_before,
+      state: asSchedulerPhase(row.state_before),
       due: row.due_before,
       stability: row.stability_before,
       difficulty: row.difficulty_before,
     },
     after: {
-      state: row.state_after,
+      state: asSchedulerPhase(row.state_after),
       due: row.due_after,
       stability: row.stability_after,
       difficulty: row.difficulty_after,
