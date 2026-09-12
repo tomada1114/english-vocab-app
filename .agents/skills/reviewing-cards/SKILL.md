@@ -15,8 +15,7 @@ description: >
 **Owns:** the two review lenses over a batch of cards, what each run is handed, the
 verdict vocabulary it returns, and who decides. **Does not own:** the card schema, the
 fields, and the mechanical Lint (`building-the-vocab-app`); how a card is written in the
-first place (the `generating-cards` skill, once it exists); where a test file goes
-(`placing-tests`).
+first place (`generating-cards`); where a test file goes (`placing-tests`).
 
 The mechanical Lint sees only shape. Whether a front has exactly one answer, whether a
 paraphrase gives it away, whether an example is a sentence anyone would say — none of

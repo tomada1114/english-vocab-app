@@ -39,8 +39,9 @@ authority for what can be committed.
    shape and derive the id from the headword and part of speech.
 3. When an existing card fits the requested topic, propose adding the topic tag to that
    card instead of creating a duplicate.
-4. Run `pnpm fix`, then run `pnpm cards:lint` until it reports no finding. Fix the card
-   text or tags; do not weaken a rule to make a batch pass.
+4. Run `pnpm fix`, then run `pnpm cards:lint` until it reports no ERROR. Treat warnings
+   as review prompts, not release blockers; fix the card text or tags and do not weaken
+   a rule to make a batch pass.
 5. Run both lenses in `reviewing-cards` as an independent review. Apply the merged
    verdicts, report any overturned verdict to the owner, and run `pnpm cards:lint`
    again.
