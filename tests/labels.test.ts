@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { MANAGED_LABELS } from "../scripts/label-pr.mjs";
 import { parseLabelManifest } from "../scripts/lib/labels-manifest.mjs";
 
 // `.github/labels.yml` is the single declarative source for this
@@ -81,38 +80,4 @@ describe("label taxonomy", () => {
       }
     },
   );
-
-  it("every label pr-label.yml can apply is declared in .github/labels.yml", () => {
-    // pr-label.yml derives a label from the PR title's Conventional Commit
-    // type (mapped in scripts/label-pr.mjs, which the workflow calls) and
-    // applies it best-effort — `gh pr edit` on a label the repository does
-    // not have prints a notice and exits 0, so a label that was never
-    // declared here is silently never applied. This used to be checked one
-    // step further along the chain, against `.github/release.yml`'s changelog
-    // categories; that file went with the npm release workflow, and the
-    // manifest is the remaining place a label has to exist.
-    expect(MANAGED_LABELS.size).toBeGreaterThan(0);
-    for (const label of MANAGED_LABELS) {
-      expect(
-        manifestNames.has(label),
-        `scripts/label-pr.mjs applies "${label}", which .github/labels.yml does not declare`,
-      ).toBe(true);
-    }
-  });
-
-  it("pr-label.yml still runs scripts/label-pr.mjs, not an inlined mapping", () => {
-    // MANAGED_LABELS being a subset of the manifest (above) says nothing
-    // about whether the workflow still calls this script at all — re-inlining
-    // the type -> label mapping in the YAML, or renaming the script, would
-    // leave that check green while the labels actually applied at runtime
-    // went unverified.
-    const workflowText = readFileSync(
-      path.join(githubDir, "workflows", "pr-label.yml"),
-      "utf8",
-    );
-    // Matched anywhere in the file rather than immediately after `run:`: the
-    // step is a block scalar, because it first has to tolerate a base branch
-    // that predates the script.
-    expect(workflowText).toMatch(/^\s*node scripts\/label-pr\.mjs\s*$/m);
-  });
 });

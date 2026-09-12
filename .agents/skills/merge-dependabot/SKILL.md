@@ -148,11 +148,10 @@ Fix a mechanical failure (a renamed lint rule, a new type error from a stricter
 TypeScript) on the branch; for a judgement call, stop and report instead of merging
 around it or suppressing the error.
 
-Push and open the PR with a valid Conventional Commits title (the `check-pr-title`
-workflow skips PRs labeled `dependencies`, but the squashed history and generated
-release notes still want one). Fill `.github/PULL_REQUEST_TEMPLATE.md` — list every
-rolled-up PR as `- #<number> <title>` and put the local verification commands in Test
-Plan:
+Push and open the PR with a valid Conventional Commits title — nothing enforces this
+mechanically, but the squashed history and generated release notes still want one. Fill
+`.github/PULL_REQUEST_TEMPLATE.md` — list every rolled-up PR as `- #<number> <title>`
+and put the local verification commands in Test Plan:
 
 ```bash
 git push -u origin HEAD
