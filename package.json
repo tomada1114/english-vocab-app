@@ -34,6 +34,7 @@
     "test:smoke": "vitest run --project=smoke",
     "test:related": "vitest related --run --project='!smoke'",
     "db:backup": "node scripts/db-backup.mjs",
+    "cards:export-anki": "node scripts/export-anki.mjs",
     "cards:lint": "vitest run --project=automation tests/card-data.test.ts",
     "agents:sync": "node scripts/sync-agents.mjs",
     "agents:check": "node scripts/sync-agents.mjs --check",
