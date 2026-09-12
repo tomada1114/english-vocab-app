@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { Rating, SchedulerPhase } from "../../core/scheduler";
+
 /**
  * The four scheduling values a `review_log` row keeps on both sides of a rating.
  *
@@ -13,7 +15,7 @@ import "server-only";
  * is epoch milliseconds, like every other timestamp here.
  */
 export interface ReviewSnapshot {
-  readonly state: number;
+  readonly state: SchedulerPhase;
   readonly due: number;
   readonly stability: number;
   readonly difficulty: number;
@@ -40,7 +42,7 @@ export interface ReviewLog {
   readonly cardId: string;
   readonly sessionId: number;
   /** FSRS's rating: 1 again, 2 hard, 3 good, 4 easy. */
-  readonly rating: number;
+  readonly rating: Rating;
   readonly reviewedAt: number;
   readonly before: ReviewSnapshot;
   readonly after: ReviewSnapshot;
@@ -57,7 +59,7 @@ export interface ReviewLog {
 export interface ReviewRecord {
   readonly sessionId: number;
   readonly cardId: string;
-  readonly rating: number;
+  readonly rating: Rating;
   readonly reviewedAt: number;
   readonly before: ReviewSnapshot;
   readonly after: SchedulingState;

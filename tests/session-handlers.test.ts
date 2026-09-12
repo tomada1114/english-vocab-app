@@ -14,6 +14,7 @@ import { createEndSessionHandler } from "../src/server/handlers/end-session";
 import { createRecordReviewHandler } from "../src/server/handlers/record-review";
 import { createStartSessionHandler } from "../src/server/handlers/start-session";
 import type { SessionDependencies } from "../src/server/handlers/session-context";
+import type { ReviewSnapshot } from "../src/server/db/records";
 
 // The three handlers of the study session, driven the way `writing-tests`
 // settles it: a real `new Request(...)`, a `:memory:` database, and a deck
@@ -97,7 +98,7 @@ function dependenciesOver(
 
 /** A rating already in the database, leaving the card due at `dueMs`. */
 function alreadyRated(store: Store, cardId: string, dueMs: number): void {
-  const before = {
+  const before: ReviewSnapshot = {
     state: 0,
     due: NOW - DAY_MS,
     stability: 0,
@@ -235,15 +236,20 @@ describe("POST /api/sessions", () => {
 
 describe("POST /api/sessions/[id]/reviews", () => {
   /** A store with one open session, whose id is always 1. */
-  function storeWithSession(): Store {
-    const { store } = openStore();
+  function openStoreWithSession(): { database: DatabaseSync; store: Store } {
+    const result = openStore();
+    const { store } = result;
     store.createSession({
       startedAt: NOW,
       scope: { purpose: "ielts", topics: [], target: null },
       newLimit: 10,
       rememberedBefore: 0,
     });
-    return store;
+    return result;
+  }
+
+  function storeWithSession(): Store {
+    return openStoreWithSession().store;
   }
 
   function review(store: Store, id: number, body?: unknown): Promise<Response> {
@@ -351,25 +357,11 @@ describe("POST /api/sessions/[id]/reviews", () => {
   // A phase outside FSRS's four is a row no version of this app writes; what
   // it must not do is end the session it appears in.
   it("rates a card whose stored phase is not one FSRS knows, as a new card", async () => {
-    const store = storeWithSession();
-    store.recordReview({
-      sessionId: 1,
-      cardId: MITIGATE.id,
-      rating: 3,
-      reviewedAt: NOW - DAY_MS,
-      before: { state: 0, due: NOW - DAY_MS, stability: 0, difficulty: 0 },
-      after: {
-        state: 7,
-        due: NOW - DAY_MS,
-        stability: 4.5,
-        difficulty: 5,
-        scheduledDays: 1,
-        learningSteps: 0,
-        reps: 1,
-        lapses: 0,
-        lastReview: NOW - DAY_MS,
-      },
-    });
+    const { database, store } = openStoreWithSession();
+    alreadyRated(store, MITIGATE.id, NOW - DAY_MS);
+    database
+      .prepare("UPDATE card_state SET state = :state WHERE card_id = :card_id")
+      .run({ state: 7, card_id: MITIGATE.id });
 
     const response = await review(store, 1, { cardId: MITIGATE.id, rating: 3 });
 
