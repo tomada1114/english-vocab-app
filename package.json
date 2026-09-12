@@ -21,9 +21,9 @@
   "scripts": {
     "clean": "node scripts/clean.mjs .next coverage .eslintcache tsconfig.tsbuildinfo",
     "clean:deep": "node scripts/clean.mjs .next coverage .eslintcache tsconfig.tsbuildinfo dist node_modules",
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 127.0.0.1",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",

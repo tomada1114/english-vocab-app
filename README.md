@@ -25,6 +25,22 @@ from `messages/en.json`. The `/[locale]/` tree and the typed catalogs stay in pl
 locale can be added back by reverting that decision; see `starting-an-app`'s "The locale
 decision".
 
+## Daily use
+
+Build and start the local app with:
+
+```sh
+pnpm build && pnpm start
+```
+
+Then open <http://127.0.0.1:3000/en>. Review history lives in
+`.data/english-vocab.sqlite`; set `VOCAB_DB_PATH` to use a different SQLite file. New
+cards come from the `generating-cards` skill; after generating them, run:
+
+```sh
+pnpm cards:lint
+```
+
 ## Starting a new app from this template
 
 Copy the tree, then work through
