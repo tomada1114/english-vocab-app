@@ -54,7 +54,9 @@ export type SessionErrorCode =
   /** The rated card id is in no file under the card directory. */
   | "ERR_SESSION_CARD_NOT_FOUND"
   /** The session row's stored scope no longer matches the scope schema. */
-  | "ERR_SESSION_SCOPE_CORRUPT";
+  | "ERR_SESSION_SCOPE_CORRUPT"
+  /** A stored card state names no scheduler phase. */
+  | "ERR_SESSION_CARD_STATE_CORRUPT";
 
 /**
  * The status each code is answered with.
@@ -69,6 +71,7 @@ const SESSION_ERROR_STATUS = {
   ERR_SESSION_NOT_FOUND: 404,
   ERR_SESSION_CARD_NOT_FOUND: 400,
   ERR_SESSION_SCOPE_CORRUPT: 500,
+  ERR_SESSION_CARD_STATE_CORRUPT: 500,
 } as const satisfies Record<SessionErrorCode, number>;
 
 /**
@@ -86,6 +89,8 @@ const SESSION_ERROR_MESSAGE = {
   ERR_SESSION_CARD_NOT_FOUND: "The request names a card the deck does not hold.",
   ERR_SESSION_SCOPE_CORRUPT:
     "The scope stored against that session does not match the scope schema.",
+  ERR_SESSION_CARD_STATE_CORRUPT:
+    "A card's stored scheduling state does not name a phase the scheduler knows.",
 } as const satisfies Record<SessionErrorCode, string>;
 
 /** The answer one of these codes is sent as. */
@@ -144,21 +149,17 @@ export function readNewCardsPerDay(store: Store): number {
   );
 }
 
-/**
- * `state` as the scheduler's own phase.
- *
- * @remarks
- * The column is a plain INTEGER and the scheduler's type is a closed union, so
- * the two are bridged in exactly one place. Anything outside the four FSRS
- * phases reads as New, which is what a row written by a future version of this
- * app should degrade to rather than crash a session on.
- */
-function toPhase(state: number): SchedulerPhase {
-  return state === 1 || state === 2 || state === 3 ? state : 0;
+/** Maps stored state to the scheduler's closed union; out-of-range values are corrupt. */
+function toPhase(state: number): SchedulerPhase | null {
+  return state === 0 || state === 1 || state === 2 || state === 3 ? state : null;
 }
 
 /** One `card_state` row as the scheduler and the queue builder read it. */
-function toSchedulerState(row: CardState): SchedulerState {
+function toSchedulerState(row: CardState): SchedulerState | null {
+  const phase = toPhase(row.state);
+  if (phase === null) {
+    return null;
+  }
   return {
     due: row.due,
     stability: row.stability,
@@ -167,16 +168,24 @@ function toSchedulerState(row: CardState): SchedulerState {
     learningSteps: row.learningSteps,
     reps: row.reps,
     lapses: row.lapses,
-    state: toPhase(row.state),
+    state: phase,
     lastReview: row.lastReview,
   };
 }
 
 /** Every rated card's scheduler state, keyed by id; a card with no entry is new. */
-export function schedulerStates(store: Store): ReadonlyMap<string, SchedulerState> {
-  return new Map(
-    store.getCardStates().map((row) => [row.cardId, toSchedulerState(row)]),
-  );
+export function schedulerStates(
+  store: Store,
+): Result<ReadonlyMap<string, SchedulerState>, Response> {
+  const states = new Map<string, SchedulerState>();
+  for (const row of store.getCardStates()) {
+    const state = toSchedulerState(row);
+    if (state === null) {
+      return err(sessionFailure("ERR_SESSION_CARD_STATE_CORRUPT"));
+    }
+    states.set(row.cardId, state);
+  }
+  return ok(states);
 }
 
 /** The whole `review_log`, as the narrower view every progress figure reads. */

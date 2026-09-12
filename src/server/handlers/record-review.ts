@@ -86,8 +86,12 @@ export function createRecordReviewHandler(
       return sessionFailure("ERR_SESSION_CARD_NOT_FOUND");
     }
 
+    const states = schedulerStates(store);
+    if (!states.ok) {
+      return states.error;
+    }
     const nowMs = now();
-    const outcome = rate(schedulerStates(store).get(cardId) ?? null, rating, nowMs);
+    const outcome = rate(states.value.get(cardId) ?? null, rating, nowMs);
     store.recordReview({
       sessionId: session.value.id,
       cardId,
