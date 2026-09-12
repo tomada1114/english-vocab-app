@@ -72,10 +72,14 @@ export function createStartSessionHandler(
     const cards = await readCards();
     const nowMs = now();
     const day = dayBounds(nowMs);
+    const states = schedulerStates(store);
+    if (!states.ok) {
+      return states.error;
+    }
 
     const queue = buildQueue({
       cards: cards.filter((card) => inScope(card, scope)),
-      states: schedulerStates(store),
+      states: states.value,
       nowMs,
       dayEndMs: day.end,
       newCardsPerDay,

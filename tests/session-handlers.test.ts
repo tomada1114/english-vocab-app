@@ -124,6 +124,12 @@ function alreadyRated(store: Store, cardId: string, dueMs: number): void {
   });
 }
 
+function corruptState(database: DatabaseSync, cardId: string, state: number): void {
+  database
+    .prepare("UPDATE card_state SET state = :state WHERE card_id = :card_id")
+    .run({ state, card_id: cardId });
+}
+
 function postTo(url: string, body?: unknown): Request {
   return new Request(url, {
     method: "POST",
@@ -134,6 +140,15 @@ function postTo(url: string, body?: unknown): Request {
 /** The parsed body of a response, whatever shape it turned out to have. */
 async function bodyOf(response: Response): Promise<Record<string, unknown>> {
   return (await response.json()) as Record<string, unknown>;
+}
+
+async function expectCardStateCorrupt(response: Response): Promise<void> {
+  expect(response.status).toBe(500);
+  expect((await bodyOf(response))["error"]).toStrictEqual({
+    code: "ERR_SESSION_CARD_STATE_CORRUPT",
+    message:
+      "A card's stored scheduling state does not name a phase the scheduler knows.",
+  });
 }
 
 describe("POST /api/sessions", () => {
@@ -185,6 +200,20 @@ describe("POST /api/sessions", () => {
 
     expect(await queuedIds(store)).toStrictEqual(["curriculum--noun"]);
   });
+
+  it.each([-1, 4, 7])(
+    "refuses to open a session when a stored state is %s",
+    async (state) => {
+      const { database, store } = openStore();
+      alreadyRated(store, MITIGATE.id, NOW - DAY_MS);
+      corruptState(database, MITIGATE.id, state);
+
+      await expectCardStateCorrupt(await start(store));
+
+      expect(store.getSession(1)).toBeUndefined();
+      expect(store.getCardStates()[0]).toMatchObject({ cardId: MITIGATE.id, state });
+    },
+  );
 
   it("sends each card's front and back together", async () => {
     const { store } = openStore();
@@ -354,19 +383,49 @@ describe("POST /api/sessions/[id]/reviews", () => {
     expect(store.listReviewLogs()).toHaveLength(1);
   });
 
-  // A phase outside FSRS's four is a row no version of this app writes; what
-  // it must not do is end the session it appears in.
-  it("rates a card whose stored phase is not one FSRS knows, as a new card", async () => {
+  it.each([-1, 4, 7])("refuses a rating when its stored state is %s", async (state) => {
     const { database, store } = openStoreWithSession();
     alreadyRated(store, MITIGATE.id, NOW - DAY_MS);
-    database
-      .prepare("UPDATE card_state SET state = :state WHERE card_id = :card_id")
-      .run({ state: 7, card_id: MITIGATE.id });
+    corruptState(database, MITIGATE.id, state);
+    const logsBefore = store.listReviewLogs();
 
-    const response = await review(store, 1, { cardId: MITIGATE.id, rating: 3 });
+    await expectCardStateCorrupt(
+      await review(store, 1, { cardId: MITIGATE.id, rating: 3 }),
+    );
 
-    expect(response.status).toBe(200);
-    expect(store.listReviewLogs()[1]?.before.state).toBe(0);
+    expect(store.listReviewLogs()).toStrictEqual(logsBefore);
+    expect(store.getCardStates()[0]).toMatchObject({ cardId: MITIGATE.id, state });
+  });
+
+  it.each([0, 1, 2, 3])(
+    "rates a stored state the scheduler knows: %s",
+    async (state) => {
+      const { database, store } = openStoreWithSession();
+      alreadyRated(store, MITIGATE.id, NOW - DAY_MS);
+      corruptState(database, MITIGATE.id, state);
+
+      const response = await review(store, 1, { cardId: MITIGATE.id, rating: 3 });
+
+      expect(response.status).toBe(200);
+      expect(store.listReviewLogs()).toHaveLength(2);
+    },
+  );
+
+  it("refuses a rating when another stored card state is corrupt", async () => {
+    const { database, store } = openStoreWithSession();
+    alreadyRated(store, MITIGATE.id, NOW - DAY_MS);
+    alreadyRated(store, CURRICULUM.id, NOW - DAY_MS);
+    corruptState(database, CURRICULUM.id, 7);
+    const logsBefore = store.listReviewLogs();
+
+    await expectCardStateCorrupt(
+      await review(store, 1, { cardId: MITIGATE.id, rating: 3 }),
+    );
+
+    expect(store.listReviewLogs()).toStrictEqual(logsBefore);
+    expect(
+      store.getCardStates().find((state) => state.cardId === CURRICULUM.id),
+    ).toMatchObject({ state: 7 });
   });
 
   it("writes nothing when the rating is refused", async () => {
@@ -455,6 +514,18 @@ describe("POST /api/sessions/[id]/end", () => {
 
     expect(store.getSession(1)).toMatchObject({ endedAt: NOW });
     expect(store.getSession(1)?.rememberedAfter).toBeCloseTo(1, 10);
+  });
+
+  it("ends a session even when a stored card state is corrupt", async () => {
+    const { database, store } = openStore();
+    await sessionWithOneRating(store);
+    corruptState(database, MITIGATE.id, 7);
+
+    const response = await end(store, 1);
+
+    expect(response.status).toBe(200);
+    expect((await bodyOf(response))["reviewed"]).toBe(1);
+    expect(store.getSession(1)?.endedAt).toBe(NOW);
   });
 
   it("refuses a session id nothing ever opened", async () => {
