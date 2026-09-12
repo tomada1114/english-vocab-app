@@ -16,7 +16,7 @@ description: >
 `nextjs-app-template`. **Does not own:** zone boundaries and the Route Handler shape
 (`building-app-routes`), the catalog mechanics (`localizing-ui`), error-code naming
 (`designing-errors`), the procedure for reviewing a batch of cards (`reviewing-cards`),
-and the procedure for writing one (the `generating-cards` skill, once it exists).
+and the procedure for writing one (`generating-cards`).
 
 This repository keeps no `docs/` tree. This skill and its references are the design of
 record: a change to a decision here is made in the same pull request that changes the

@@ -80,6 +80,7 @@ describe("loadCards over a tree holding one file per failure", () => {
     expect(cards.map((card) => card.id)).toStrictEqual([
       "carbon-footprint--noun",
       "mitigate--verb",
+      "resilience--noun",
       "well-being--noun",
     ]);
   });
@@ -111,7 +112,7 @@ describe("loadCards over a tree holding one file per failure", () => {
 
   it("keeps a bad file from hiding the cards beside it", async () => {
     const { cards, errors } = await loadCards(fixtureCards);
-    expect(cards.length).toBe(3);
+    expect(cards.length).toBe(4);
     expect(errors.length).toBe(3);
   });
 });

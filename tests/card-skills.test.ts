@@ -4,6 +4,10 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { cardSchema } from "../src/core/cards/card";
+import { lintCards } from "../src/core/cards/lint";
+import { loadLists } from "../src/server/cards";
+
 // The card pipeline skills are prompts, not code: `reviewing-cards` is pasted
 // into an independent run and its answer is parsed by the calling session. So
 // the parts a caller depends on — the placeholders the prompt template is fed
@@ -15,6 +19,20 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const skillRoot = path.join(repoRoot, ".agents", "skills", "reviewing-cards");
+const generatingSkillRoot = path.join(
+  repoRoot,
+  ".agents",
+  "skills",
+  "generating-cards",
+);
+const dataDirectory = path.join(repoRoot, "data");
+const workedExampleFixture = path.join(
+  repoRoot,
+  "tests",
+  "fixtures",
+  "cards",
+  "resilience--noun.json",
+);
 
 function readSkillFile(relative: string): string {
   return readFileSync(path.join(skillRoot, relative), "utf8");
@@ -24,6 +42,14 @@ const skill = readSkillFile("SKILL.md");
 const blindAnswer = readSkillFile(path.join("references", "blind-answer.md"));
 const perspectiveReview = readSkillFile(
   path.join("references", "perspective-review.md"),
+);
+const generatingSkill = readFileSync(
+  path.join(generatingSkillRoot, "SKILL.md"),
+  "utf8",
+);
+const cardRules = readFileSync(
+  path.join(generatingSkillRoot, "references", "card-rules.md"),
+  "utf8",
 );
 
 // --- markdown scanning -------------------------------------------------------
@@ -233,6 +259,43 @@ function verdictsOf(output: unknown): string[] {
 }
 
 // --- the assertions -----------------------------------------------------------
+
+describe("the generating-cards skill", () => {
+  it("links its rules and the independent review", () => {
+    expect(generatingSkill).toContain("[card-rules.md](references/card-rules.md)");
+    expect(generatingSkill).toContain("reviewing-cards");
+    expect(generatingSkill).toContain("pnpm cards:lint");
+  });
+
+  it("gives each adapted rule exactly one level-two section", () => {
+    expect(sectionsAtLevel(cardRules, 2).map(({ title }) => title)).toEqual([
+      "C1. Keep the card shape",
+      "C2. Make the front answerable",
+      "C3. Keep wording readable",
+      "C4. Use the headword in examples",
+      "C5. Ground the word in the target",
+      "C6. Keep one key per sense",
+      "C7. Keep the back honest",
+      "C8. Give every example a different context",
+    ]);
+  });
+
+  it("keeps the worked JSON example equal to a fixture with a clean Lint", async () => {
+    const examples = fencedBlocks(cardRules).filter(
+      (candidate) => candidate.info === "json",
+    );
+    expect(examples).toHaveLength(1);
+    const [block] = examples;
+    expect(block).toBeDefined();
+    const documented = JSON.parse(block?.body ?? "null") as unknown;
+    const fixture = JSON.parse(readFileSync(workedExampleFixture, "utf8")) as unknown;
+    expect(documented).toEqual(fixture);
+
+    const card = cardSchema.parse(fixture);
+    const lists = await loadLists(dataDirectory);
+    expect(lintCards([{ fileName: `${card.id}.json`, card }], lists)).toEqual([]);
+  });
+});
 
 describe("the reviewing-cards SKILL.md", () => {
   it("links both reference files", () => {

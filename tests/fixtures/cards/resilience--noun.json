@@ -1,0 +1,14 @@
+{
+  "id": "resilience--noun",
+  "headword": "resilience",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the ability to recover after a serious problem",
+  "cloze": "Coastal towns need ___ after repeated storms.",
+  "examples": [
+    "The team showed resilience under pressure.",
+    "Her resilience impressed everyone during the exam."
+  ]
+}
