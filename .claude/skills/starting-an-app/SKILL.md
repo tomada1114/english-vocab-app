@@ -104,11 +104,10 @@ rename unchanged and is most of what starting from this template buys:
   memory. **REQUIRED:** `authoring-skills` for the loop that keeps the two trees
   identical, and for the AGENTS.md Skills table row that
   `tests/skills-frontmatter.test.ts` requires in both directions.
-- **The label workflow** — `.github/labels.yml`, `scripts/sync-labels.mjs` behind
-  `pnpm repo:labels`, and `.github/workflows/pr-label.yml`. Run `pnpm repo:labels`
-  against the new repository early: the workflow only ever _applies_ a label, and when
-  one does not exist yet it emits a notice instead of failing, so a missing taxonomy is
-  silent. **BACKGROUND:** `triaging-issues` for what the labels mean.
+- **The label taxonomy** — `.github/labels.yml` and `scripts/sync-labels.mjs` behind
+  `pnpm repo:labels`. Run `pnpm repo:labels` against the new repository early: an issue
+  form applying a label that does not exist yet fails silently rather than reporting
+  one. **BACKGROUND:** `triaging-issues` for what the labels mean.
 - **`.env.example`**, even when the app reads nothing yet. `src/server/env.ts` is the
   only module that touches `process.env`, and `tests/server-env.test.ts` asserts the two
   stay in step; the example file is half of that check.

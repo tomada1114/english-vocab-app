@@ -2857,13 +2857,17 @@ function workflowSource(name: string): string {
 
 describe("the workflows in .github/workflows", () => {
   it("includes every workflow spec 02 §5.2 makes mandatory", () => {
+    // Deliberate deviation from spec 02 §5.2: check-pr-title.yml and
+    // pr-label.yml are gone by the repository owner's explicit decision — one
+    // validated a PR title's Conventional Commit prefix, the other derived a
+    // label from that same prefix, and keeping both was redundant. The spec
+    // itself is unchanged; this repository just no longer implements that
+    // one clause of it.
     expect(workflowNames).toEqual([
-      "check-pr-title.yml",
       "ci.yml",
       "claude-code-review.yml",
       "claude.yml",
       "dependency-review.yml",
-      "pr-label.yml",
       "security-audit.yml",
       "typos.yml",
     ]);
@@ -2916,8 +2920,7 @@ describe("the workflows in .github/workflows", () => {
   });
 
   it("grants a write scope only where the job cannot do its work without one", () => {
-    // pr-label writes a label and tolerates the read-only token a fork PR
-    // gets. The two Claude workflows request `id-token: write` only, which the
+    // The two Claude workflows request `id-token: write` only, which the
     // action trades for a Claude GitHub App token to comment with; their
     // GITHUB_TOKEN scopes stay read-only. Everything else, and in particular
     // everything that runs repository code, stays read-only.
@@ -2925,11 +2928,7 @@ describe("the workflows in .github/workflows", () => {
       scan(workflowSource(name)).some((line) => line.text.endsWith(": write")),
     );
 
-    expect(writers.sort()).toEqual([
-      "claude-code-review.yml",
-      "claude.yml",
-      "pr-label.yml",
-    ]);
+    expect(writers.sort()).toEqual(["claude-code-review.yml", "claude.yml"]);
   });
 });
 
@@ -2939,62 +2938,6 @@ const dependabotConfig = readFileSync(
   path.join(repoRoot, ".github", "dependabot.yml"),
   "utf8",
 );
-/** The entries of a `key: |` block scalar, trimmed, in file order. */
-function blockScalarEntries(source: string, key: string): string[] {
-  const lines = source.split("\n");
-  const start = lines.findIndex((line) => line.trim() === `${key}: |`);
-  const header = lines[start];
-  if (start === -1 || header === undefined) {
-    return [];
-  }
-
-  const indent = header.length - header.trimStart().length;
-  const entries: string[] = [];
-  for (let next = start + 1; next < lines.length; next += 1) {
-    const line = lines[next];
-    if (line === undefined) {
-      break;
-    }
-    if (line.trim() === "") {
-      continue;
-    }
-    if (line.length - line.trimStart().length <= indent) {
-      break;
-    }
-    entries.push(line.trim());
-  }
-  return entries;
-}
-
-/** The Conventional Commit types every `commit-message.prefix` in dependabot.yml asks for. */
-function dependabotCommitTypes(source: string): string[] {
-  return [...source.matchAll(/^\s*prefix:\s*"?([^"\s]+?):?"?\s*$/gm)].flatMap(
-    (match) => match[1] ?? [],
-  );
-}
-
-describe("the PR title vocabulary covers everything that can open a PR", () => {
-  const allowedTypes = blockScalarEntries(
-    workflowSource("check-pr-title.yml"),
-    "types",
-  );
-
-  it("declares the allowed types instead of inheriting the action's default", () => {
-    // The action's built-in default is not visible in this repository and does
-    // not contain `deps`, so every Dependabot PR failed a check whose rule
-    // nobody could read. What is enforced has to be written down here.
-    expect(allowedTypes).toContain("feat");
-    expect(allowedTypes).toContain("fix");
-    expect(allowedTypes).toContain("chore");
-  });
-
-  it("accepts every prefix Dependabot commits with", () => {
-    const prefixes = dependabotCommitTypes(dependabotConfig);
-
-    expect(prefixes).not.toEqual([]);
-    expect(prefixes.filter((prefix) => !allowedTypes.includes(prefix))).toEqual([]);
-  });
-});
 
 describe("the Dependabot cooldown agrees with the pnpm install cooldown", () => {
   it("states the same window in days and in minutes", () => {
@@ -3144,8 +3087,8 @@ describe("the development runtime contract fails closed", () => {
   it("keeps .node-version at or above the devEngines runtime minimum", () => {
     // `devEngines.runtime.version` (e.g. `^24.2.0`) is what `pnpm install`
     // enforces locally, and `.node-version` is what a version manager
-    // materializes and what `node-version-file` resolves in ci.yml,
-    // pr-label.yml and security-audit.yml. Comparing only the major version
+    // materializes and what `node-version-file` resolves in ci.yml and
+    // security-audit.yml. Comparing only the major version
     // let `.node-version` state a bare "24" — which a version manager can
     // resolve to an already-installed 24.0.x or 24.1.x below the stated
     // minimum — while this check still passed. That gap is exactly what

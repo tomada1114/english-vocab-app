@@ -57,8 +57,8 @@
   color: 0e8a16
   description: "Design settled, small, low-judgment: a light model can ship it as written."
 
-# Labels applied by .github/workflows/pr-label.yml from a PR's Conventional
-# Commit type. Never used for issue triage.
+# PR-only labels. `dependencies` is applied by Dependabot itself; `ci` is
+# applied by hand. Never used for issue triage.
 - name: dependencies
   color: 0366d6
   description: "A dependency version bump."

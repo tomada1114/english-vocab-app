@@ -186,9 +186,9 @@ function display(root, target) {
  *
  * @remarks
  * Exported so `tests/verify-hooks.test.ts` can drive every branch against
- * throwaway `git init` repositories, the same dependency-injection shape
- * `scripts/label-pr.mjs`'s `main` uses. Nothing here writes: the worst a
- * misconfigured run can do is report.
+ * throwaway `git init` repositories, the same dependency-injection shape a
+ * CLI entry point's `main` uses elsewhere in `scripts/`. Nothing here writes:
+ * the worst a misconfigured run can do is report.
  *
  * `git` runs under {@link isolatedGitEnv}. An inherited `GIT_DIR` outranks a
  * `cwd`, and a `pnpm install` started from inside a hook would otherwise ask
