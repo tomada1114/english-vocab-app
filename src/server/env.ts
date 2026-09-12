@@ -14,8 +14,8 @@ import * as z from "zod";
  * The value is trimmed rather than kept as written, because every name here is
  * a credential and surrounding whitespace is never part of one. A secret pasted
  * out of a manager with a trailing newline would otherwise be a key no caller
- * can present in a matching form: `src/server/handlers/ask.ts` compares against
- * a bearer token that cannot carry leading or trailing whitespace, so an
+ * can present in a matching form: a future billed handler compares against a
+ * bearer token that cannot carry leading or trailing whitespace, so an
  * untrimmed `API_ACCESS_KEY` would answer 401 to every request, including one
  * sending the exact configured value.
  */
