@@ -2857,15 +2857,16 @@ function workflowSource(name: string): string {
 
 describe("the workflows in .github/workflows", () => {
   it("includes every workflow spec 02 §5.2 makes mandatory", () => {
-    // Deliberate deviation from spec 02 §5.2: check-pr-title.yml and
-    // pr-label.yml are gone by the repository owner's explicit decision — one
-    // validated a PR title's Conventional Commit prefix, the other derived a
-    // label from that same prefix, and keeping both was redundant. The spec
-    // itself is unchanged; this repository just no longer implements that
-    // one clause of it.
+    // Deliberate deviation from spec 02 §5.2: check-pr-title.yml, pr-label.yml
+    // and claude-code-review.yml are gone by the repository owner's explicit
+    // decision. The first two validated a PR title's Conventional Commit
+    // prefix and derived a label from it — redundant on a personal project.
+    // The third posted an automatic review on every PR; claude.yml's
+    // @claude-mention workflow still covers an on-demand review. The spec
+    // itself is unchanged; this repository just no longer implements those
+    // clauses of it.
     expect(workflowNames).toEqual([
       "ci.yml",
-      "claude-code-review.yml",
       "claude.yml",
       "dependency-review.yml",
       "security-audit.yml",
@@ -2920,15 +2921,15 @@ describe("the workflows in .github/workflows", () => {
   });
 
   it("grants a write scope only where the job cannot do its work without one", () => {
-    // The two Claude workflows request `id-token: write` only, which the
-    // action trades for a Claude GitHub App token to comment with; their
-    // GITHUB_TOKEN scopes stay read-only. Everything else, and in particular
-    // everything that runs repository code, stays read-only.
+    // claude.yml requests `id-token: write` only, which the action trades for
+    // a Claude GitHub App token to comment with; its GITHUB_TOKEN scope stays
+    // read-only. Everything else, and in particular everything that runs
+    // repository code, stays read-only.
     const writers = workflowNames.filter((name) =>
       scan(workflowSource(name)).some((line) => line.text.endsWith(": write")),
     );
 
-    expect(writers.sort()).toEqual(["claude-code-review.yml", "claude.yml"]);
+    expect(writers.sort()).toEqual(["claude.yml"]);
   });
 });
 
