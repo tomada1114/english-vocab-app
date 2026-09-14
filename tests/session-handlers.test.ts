@@ -98,6 +98,14 @@ function dependenciesOver(
 
 /** A rating already in the database, leaving the card due at `dueMs`. */
 function alreadyRated(store: Store, cardId: string, dueMs: number): void {
+  if (store.getSession(1) === undefined) {
+    store.createSession({
+      startedAt: NOW - DAY_MS,
+      scope: { purpose: "ielts", topics: [], target: null },
+      newLimit: 10,
+      rememberedBefore: 0,
+    });
+  }
   const before: ReviewSnapshot = {
     state: 0,
     due: NOW - DAY_MS,
@@ -210,7 +218,7 @@ describe("POST /api/sessions", () => {
 
       await expectCardStateCorrupt(await start(store));
 
-      expect(store.getSession(1)).toBeUndefined();
+      expect(store.getSession(2)).toBeUndefined();
       expect(store.getCardStates()[0]).toMatchObject({ cardId: MITIGATE.id, state });
     },
   );

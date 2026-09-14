@@ -42,6 +42,18 @@ function newStore(): Store {
 
 const REVIEWED_AT = 1_757_000_000_000;
 
+/** A store with the session parent used by the review fixtures below. */
+function newStoreWithSession(): Store {
+  const store = newStore();
+  store.createSession({
+    startedAt: REVIEWED_AT,
+    scope: { purpose: "ielts", topics: [], target: null },
+    newLimit: 10,
+    rememberedBefore: 0,
+  });
+  return store;
+}
+
 /** The empty card FSRS starts from: never reviewed, nothing scheduled. */
 const NEW_CARD: SchedulingState = {
   state: 0,
@@ -96,7 +108,7 @@ describe("getCardStates", () => {
   });
 
   it("returns the state a rating left, as the record it was written from", () => {
-    const store = newStore();
+    const store = newStoreWithSession();
     const review = reviewRecord();
 
     store.recordReview(review);
@@ -107,7 +119,7 @@ describe("getCardStates", () => {
   });
 
   it("keeps one row per card, updated by the latest rating", () => {
-    const store = newStore();
+    const store = newStoreWithSession();
     store.recordReview(reviewRecord());
     store.recordReview(
       reviewRecord({
@@ -123,7 +135,7 @@ describe("getCardStates", () => {
   });
 
   it("orders the cards by id", () => {
-    const store = newStore();
+    const store = newStoreWithSession();
     for (const cardId of ["well-being--noun", "carbon-footprint--noun"]) {
       store.recordReview(reviewRecord({ cardId }));
     }
@@ -137,7 +149,7 @@ describe("getCardStates", () => {
 
 describe("recordReview", () => {
   it("writes the log row with both sides of the rating", () => {
-    const store = newStore();
+    const store = newStoreWithSession();
 
     store.recordReview(reviewRecord());
 
@@ -163,7 +175,7 @@ describe("recordReview", () => {
   // column, and only after `card_state` has already been written — which is
   // exactly the half-applied rating the transaction exists to prevent.
   it("leaves card_state untouched when the log row is rejected", () => {
-    const store = newStore();
+    const store = newStoreWithSession();
     store.recordReview(reviewRecord());
     const before = store.getCardStates();
 
@@ -182,7 +194,7 @@ describe("recordReview", () => {
   });
 
   it("never adds a card_state row when the first rating of a card is rejected", () => {
-    const store = newStore();
+    const store = newStoreWithSession();
 
     thrown(() => {
       store.recordReview(reviewRecord({ reviewedAt: REVIEWED_AT + 0.5 }));
@@ -256,7 +268,7 @@ describe("withTransaction", () => {
 
 describe("listReviewLogs", () => {
   it("returns every rating ever given, oldest first", () => {
-    const store = newStore();
+    const store = newStoreWithSession();
     for (const reviewedAt of [REVIEWED_AT + 2, REVIEWED_AT, REVIEWED_AT + 1]) {
       store.recordReview(reviewRecord({ reviewedAt }));
     }
@@ -272,7 +284,7 @@ describe("listReviewLogs", () => {
 describe("countFirstReviewsSince", () => {
   /** Two cards: one first seen a day ago, one first seen today and re-rated. */
   function storeWithHistory(): Store {
-    const store = newStore();
+    const store = newStoreWithSession();
     store.recordReview({
       ...reviewRecord({ cardId: "carbon-footprint--noun" }),
       reviewedAt: REVIEWED_AT - 86_400_000,

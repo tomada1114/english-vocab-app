@@ -69,6 +69,40 @@ export const MIGRATIONS: readonly string[] = [
     value TEXT NOT NULL
   ) STRICT;
   `,
+  `
+  CREATE TABLE review_log_new (
+    id                INTEGER NOT NULL PRIMARY KEY,
+    card_id           TEXT    NOT NULL,
+    session_id        INTEGER NOT NULL,
+    rating            INTEGER NOT NULL,
+    reviewed_at       INTEGER NOT NULL,
+    state_before      INTEGER NOT NULL,
+    due_before        INTEGER NOT NULL,
+    stability_before  REAL    NOT NULL,
+    difficulty_before REAL    NOT NULL,
+    state_after       INTEGER NOT NULL,
+    due_after         INTEGER NOT NULL,
+    stability_after   REAL    NOT NULL,
+    difficulty_after  REAL    NOT NULL,
+    FOREIGN KEY (card_id) REFERENCES card_state(card_id) ON DELETE RESTRICT,
+    FOREIGN KEY (session_id) REFERENCES session(id) ON DELETE RESTRICT
+  ) STRICT;
+
+  INSERT INTO review_log_new (
+    id, card_id, session_id, rating, reviewed_at,
+    state_before, due_before, stability_before, difficulty_before,
+    state_after, due_after, stability_after, difficulty_after
+  )
+  SELECT
+    id, card_id, session_id, rating, reviewed_at,
+    state_before, due_before, stability_before, difficulty_before,
+    state_after, due_after, stability_after, difficulty_after
+  FROM review_log;
+
+  DROP TABLE review_log;
+  ALTER TABLE review_log_new RENAME TO review_log;
+  CREATE INDEX review_log_card_id_reviewed_at ON review_log (card_id, reviewed_at);
+  `,
 ];
 
 /** `PRAGMA user_version` as SQLite answers it: never negative, this app never writes one. */
