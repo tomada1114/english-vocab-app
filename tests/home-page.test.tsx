@@ -27,6 +27,7 @@ const HOME_DATA: HomePageData = {
   rememberedNow: 12.4,
   unlearnedCount: 4,
   targetRatio: null,
+  dailyCurve: [],
   canStart: true,
 };
 
@@ -64,6 +65,19 @@ describe("HomePageView", () => {
     expect(
       screen.getByText(en.HomePage.unlearnedLabel).nextElementSibling,
     ).toHaveTextContent("4");
+  });
+
+  it("renders the daily curve under the progress figures", () => {
+    renderHome({
+      dailyCurve: [
+        { atMs: 1, remembered: 1.2 },
+        { atMs: 2, remembered: 2.4 },
+      ],
+    });
+
+    expect(
+      screen.getByRole("img", { name: "Remembered now from 1 to 2 cards." }),
+    ).toBeInTheDocument();
   });
 
   it("omits the target ratio when no target is selected", () => {

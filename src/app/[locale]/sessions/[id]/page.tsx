@@ -1,12 +1,11 @@
 import { hasLocale } from "next-intl";
-import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import type { ReactElement } from "react";
 
-import { Link } from "../../../../i18n/navigation";
 import { LOCALES } from "../../../../i18n/locales";
 import { readSessionSummary } from "../../../../server/composition";
 import { parseSessionId } from "../../../../server/handlers/session-context";
+import { SessionSummaryView } from "../../session-summary";
 
 /**
  * Read per request, never prerendered.
@@ -42,26 +41,10 @@ export default async function SessionSummaryPage({
   }
 
   const sessionId = parseSessionId(id);
-  const summary = sessionId === null ? undefined : readSessionSummary(sessionId);
+  const summary = sessionId === null ? undefined : await readSessionSummary(sessionId);
   if (summary === undefined) {
     notFound();
   }
 
-  const t = await getTranslations({ locale, namespace: "SummaryPage" });
-
-  return (
-    <main>
-      <h1>{t("title")}</h1>
-      <p>{t("reviewed", { count: summary.reviewed })}</p>
-      {summary.rememberedAfter !== null && (
-        <p>
-          {t("remembered", {
-            before: Math.round(summary.rememberedBefore),
-            after: Math.round(summary.rememberedAfter),
-          })}
-        </p>
-      )}
-      <Link href="/">{t("homeLink")}</Link>
-    </main>
-  );
+  return <SessionSummaryView data={summary} />;
 }

@@ -28,6 +28,12 @@
     "noCards": "The deck has no valid cards.",
     "generateCards": "Read the card-generation guide."
   },
+  "ProgressCurve": {
+    "title": "Remembered now over time",
+    "empty": "No reviews yet. Your daily curve will appear after your first review.",
+    "accessible": "Remembered now from {first} to {last} cards.",
+    "today": "Today: {value} remembered cards"
+  },
   "StudyPage": {
     "title": "Study",
     "loading": "Starting your session…",
@@ -43,7 +49,7 @@
   "SummaryPage": {
     "title": "Session summary",
     "reviewed": "{count, plural, one {Reviewed # card} other {Reviewed # cards}}",
-    "remembered": "Remembered {before} → {after}",
+    "remembered": "remembered {change} ({before} → {after})",
     "homeLink": "Back to the home page"
   },
   "NotFound": {

@@ -35,7 +35,7 @@ interface Wiring {
   readonly endSession: RequestHandler;
   readonly updateSettings: RequestHandler;
   readonly readHome: () => Promise<HomePageData>;
-  readonly readSummary: (sessionId: number) => SessionSummary | undefined;
+  readonly readSummary: (sessionId: number) => Promise<SessionSummary | undefined>;
 }
 
 /**
@@ -61,12 +61,13 @@ function wire(): Wiring {
   const store = createStore(openDatabase(environment.VOCAB_DB_PATH));
   const readCards = async () => (await loadCards(CARD_DIRECTORY)).cards;
   const readLists = (): Promise<VocabularyLists> => loadLists(DATA_DIRECTORY);
+  const now = Date.now;
   const dependencies: SessionDependencies = {
     store,
     readCards,
-    now: Date.now,
+    now,
   };
-  const readHome = createHomePageReader({ store, readCards, readLists, now: Date.now });
+  const readHome = createHomePageReader({ store, readCards, readLists, now });
 
   return {
     startSession: createStartSessionHandler(dependencies),
@@ -74,7 +75,7 @@ function wire(): Wiring {
     endSession: createEndSessionHandler(dependencies),
     updateSettings: createSettingsHandler({ store, readLists }),
     readHome,
-    readSummary: createSessionSummaryReader(store),
+    readSummary: createSessionSummaryReader({ store, readCards, now }),
   };
 }
 
@@ -115,6 +116,8 @@ export function readHomePage(): Promise<HomePageData> {
 }
 
 /** What the summary page renders, for a session id it takes from its own path. */
-export function readSessionSummary(sessionId: number): SessionSummary | undefined {
+export function readSessionSummary(
+  sessionId: number,
+): Promise<SessionSummary | undefined> {
   return wired().readSummary(sessionId);
 }

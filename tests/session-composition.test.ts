@@ -78,14 +78,14 @@ describe("the composed study-session endpoints", () => {
     };
 
     expect(response.status).toBe(200);
-    expect(readSessionSummary(id)).toStrictEqual({
+    await expect(readSessionSummary(id)).resolves.toMatchObject({
       reviewed: ended.reviewed,
       rememberedBefore: ended.rememberedBefore,
       rememberedAfter: ended.rememberedAfter,
     });
   });
 
-  it("reports no summary for a session id nothing opened", () => {
-    expect(readSessionSummary(9_999)).toBeUndefined();
+  it("reports no summary for a session id nothing opened", async () => {
+    await expect(readSessionSummary(9_999)).resolves.toBeUndefined();
   });
 });

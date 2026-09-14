@@ -131,6 +131,7 @@ describe("the Home read model", () => {
       rememberedNow: 1,
       unlearnedCount: 1,
       targetRatio: 0.5,
+      dailyCurve: [{ atMs: NOW, remembered: 1 }],
       canStart: true,
     });
   });
