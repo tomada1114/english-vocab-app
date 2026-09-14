@@ -91,6 +91,76 @@ function thrown(work: () => unknown): unknown {
   return undefined;
 }
 
+const REVIEWED_AT = 1_757_000_000_000;
+
+/** Creates the schema as it existed before the foreign-key migration. */
+function createVersionOneDatabase(file: string): DatabaseSync {
+  const database = openRaw(file);
+  const migration = MIGRATIONS[0];
+  if (migration === undefined) {
+    throw new Error("The initial database migration is missing.");
+  }
+  database.exec(migration);
+  database.exec("PRAGMA user_version = 1");
+  return database;
+}
+
+function insertCardState(database: DatabaseSync, cardId = "mitigate--verb"): void {
+  database
+    .prepare(
+      `
+      INSERT INTO card_state (
+        card_id, due, stability, difficulty, scheduled_days,
+        learning_steps, reps, lapses, state, last_review
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    )
+    .run(cardId, REVIEWED_AT, 3.5, 5.25, 1, 1, 1, 0, 1, REVIEWED_AT);
+}
+
+function insertSession(database: DatabaseSync, id = 1): void {
+  database
+    .prepare(
+      `
+      INSERT INTO session (
+        id, started_at, ended_at, scope, new_limit, remembered_before
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `,
+    )
+    .run(id, REVIEWED_AT, null, "{}", 10, 0);
+}
+
+function insertReviewLog(
+  database: DatabaseSync,
+  cardId = "mitigate--verb",
+  sessionId = 1,
+): void {
+  database
+    .prepare(
+      `
+      INSERT INTO review_log (
+        card_id, session_id, rating, reviewed_at,
+        state_before, due_before, stability_before, difficulty_before,
+        state_after, due_after, stability_after, difficulty_after
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    )
+    .run(
+      cardId,
+      sessionId,
+      3,
+      REVIEWED_AT,
+      0,
+      REVIEWED_AT,
+      0,
+      0,
+      1,
+      REVIEWED_AT + 600_000,
+      3.5,
+      5.25,
+    );
+}
+
 describe("openDatabase over a fresh file", () => {
   it("records the migration count in PRAGMA user_version", () => {
     const database = open(temporaryDatabasePath("vocab.sqlite"));
@@ -143,6 +213,105 @@ describe("openDatabase over a fresh file", () => {
     expect(database.prepare("PRAGMA busy_timeout").get()).toEqual({
       timeout: 5000,
     });
+  });
+
+  it("enables foreign-key enforcement before migrations run", () => {
+    const database = open(":memory:");
+
+    expect(database.prepare("PRAGMA foreign_keys").get()).toEqual({
+      foreign_keys: 1,
+    });
+  });
+});
+
+describe("review_log foreign keys", () => {
+  it("reject missing card and session parents with the raw SQLite error", () => {
+    const database = open(":memory:");
+    insertCardState(database);
+    insertSession(database);
+
+    const missingCard = thrown(() => insertReviewLog(database, "missing-card"));
+    const missingSession = thrown(() =>
+      insertReviewLog(database, "mitigate--verb", 404),
+    );
+
+    expect(missingCard).toBeInstanceOf(Error);
+    expect(missingCard).not.toBeInstanceOf(DatabaseError);
+    expect(missingSession).toBeInstanceOf(Error);
+    expect(missingSession).not.toBeInstanceOf(DatabaseError);
+  });
+
+  it("restricts deleting a card or session referenced by a review", () => {
+    const database = open(":memory:");
+    insertCardState(database);
+    insertSession(database);
+    insertReviewLog(database);
+
+    const deletingCard = thrown(() =>
+      database
+        .prepare("DELETE FROM card_state WHERE card_id = ?")
+        .run("mitigate--verb"),
+    );
+    const deletingSession = thrown(() =>
+      database.prepare("DELETE FROM session WHERE id = ?").run(1),
+    );
+
+    expect(deletingCard).toBeInstanceOf(Error);
+    expect(deletingSession).toBeInstanceOf(Error);
+  });
+});
+
+describe("the foreign-key migration", () => {
+  it("preserves valid legacy rows while rebuilding review_log", () => {
+    const file = temporaryDatabasePath("vocab.sqlite");
+    const legacy = createVersionOneDatabase(file);
+    insertCardState(legacy);
+    insertSession(legacy);
+    insertReviewLog(legacy);
+    legacy.close();
+
+    const database = open(file);
+
+    expect(readUserVersion(database)).toBe(MIGRATIONS.length);
+    expect(
+      database.prepare("SELECT card_id, session_id FROM review_log").all(),
+    ).toEqual([{ card_id: "mitigate--verb", session_id: 1 }]);
+    expect(
+      database
+        .prepare("PRAGMA foreign_key_list(review_log)")
+        .all()
+        .map((row) => ({ table: row["table"], from: row["from"], to: row["to"] }))
+        .sort((left, right) => String(left.from).localeCompare(String(right.from))),
+    ).toEqual([
+      { table: "card_state", from: "card_id", to: "card_id" },
+      { table: "session", from: "session_id", to: "id" },
+    ]);
+  });
+
+  it("rolls back and leaves an orphaned legacy row untouched", () => {
+    const file = temporaryDatabasePath("vocab.sqlite");
+    const legacy = createVersionOneDatabase(file);
+    insertSession(legacy);
+    insertReviewLog(legacy, "missing-card");
+    legacy.close();
+
+    const error = thrown(() => open(file));
+
+    expect(error).toBeInstanceOf(DatabaseError);
+    expect(error).toMatchObject({ code: "ERR_DB_MIGRATION" });
+
+    const unchanged = openRaw(file);
+    expect(readUserVersion(unchanged)).toBe(1);
+    expect(
+      unchanged.prepare("SELECT card_id, session_id FROM review_log").all(),
+    ).toEqual([{ card_id: "missing-card", session_id: 1 }]);
+    expect(objectsIn(file)).toStrictEqual([
+      "card_state",
+      "review_log",
+      "review_log_card_id_reviewed_at",
+      "session",
+      "setting",
+    ]);
   });
 });
 

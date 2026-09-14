@@ -41,15 +41,15 @@ function seedDatabase(file: string): void {
       card_id, due, stability, difficulty, scheduled_days, learning_steps,
       reps, lapses, state, last_review
     ) VALUES ('mitigate--verb', 1757707980000, 3.5, 5.25, 1, 1, 1, 0, 1, 1757707380000);
+    INSERT INTO session (
+      id, started_at, scope, new_limit, remembered_before, remembered_after
+    ) VALUES (1, 1757707380000, '{"purpose":"ielts"}', 10, 0, NULL);
     INSERT INTO review_log (
       id, card_id, session_id, rating, reviewed_at, state_before, due_before,
       stability_before, difficulty_before, state_after, due_after,
       stability_after, difficulty_after
     ) VALUES (1, 'mitigate--verb', 1, 3, 1757707380000, 0, 1757707380000,
               0, 0, 1, 1757707980000, 3.5, 5.25);
-    INSERT INTO session (
-      id, started_at, scope, new_limit, remembered_before, remembered_after
-    ) VALUES (1, 1757707380000, '{"purpose":"ielts"}', 10, 0, NULL);
     INSERT INTO setting (key, value) VALUES ('newCardsPerDay', '10');
   `);
   database.close();
