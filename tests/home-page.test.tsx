@@ -1,59 +1,199 @@
-import { NextIntlClientProvider } from "next-intl";
-import { act, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 
-import HomePage from "../src/app/[locale]/page";
+import { NextIntlClientProvider } from "next-intl";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { HomePageView } from "../src/app/[locale]/home-page";
+import type { HomePageData } from "../src/server/home";
 import en from "../messages/en.json";
 
-vi.mock("next-intl/server", () => ({
-  setRequestLocale: () => undefined,
+const refresh = vi.fn();
+
+vi.mock("../src/i18n/navigation", () => ({
+  Link: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+  useRouter: () => ({ refresh }),
 }));
 
-// The home page, rendered the way `writing-tests`/`placing-tests` settle it
-// for issue #12: under jsdom, through Testing Library, with
-// `NextIntlClientProvider` supplying the `locale`/`messages` context that
-// `src/app/[locale]/layout.tsx` gets for free from the Server Component tree
-// in a real request but a unit test must pass explicitly (see
-// `NextIntlClientProvider`'s own `locale` doc comment). The page carries no
-// `"use client"` — `building-app-routes` explains why hooks alone do not make
-// it one — so what makes it renderable here is that it is synchronous, not
-// that it runs on the client. An asynchronous Server Component —
-// `LocaleLayout` itself — is explicitly out of scope; this test never renders
-// it.
+const HOME_DATA: HomePageData = {
+  scope: { purpose: "ielts", topics: [], target: null },
+  newCardsPerDay: 10,
+  purposes: [{ id: "ielts", label: "IELTS" }],
+  topics: ["education", "environment"],
+  validCardCount: 3,
+  dueToday: 2,
+  rememberedNow: 12.4,
+  unlearnedCount: 4,
+  targetRatio: null,
+  canStart: true,
+};
 
-async function renderHomePage(): Promise<void> {
-  await act(async () => {
-    render(
-      <NextIntlClientProvider locale="en" messages={en}>
-        <HomePage params={Promise.resolve({ locale: "en" })} />
-      </NextIntlClientProvider>,
-    );
-    await Promise.resolve();
-  });
+function renderHome(overrides: Partial<HomePageData> = {}): void {
+  render(
+    <NextIntlClientProvider locale="en" messages={en}>
+      <HomePageView data={{ ...HOME_DATA, ...overrides }} />
+    </NextIntlClientProvider>,
+  );
 }
 
-describe("HomePage", () => {
-  it("renders under jsdom", () => {
-    // Proves the `component` vitest project actually runs under jsdom, and
-    // that `tests/**/*.test.ts` (the `unit`/`automation` projects) does not:
-    // `tests/server-env.test.ts` and the rest of the `node`-environment suite
-    // have no `document` to assert against.
-    expect(typeof document).not.toBe("undefined");
-  });
+beforeEach(() => {
+  refresh.mockClear();
+});
 
-  it("renders the translated title and intro", async () => {
-    await renderHomePage();
+describe("HomePageView", () => {
+  it("renders the translated title and intro", () => {
+    renderHome();
 
     expect(
       screen.getByRole("heading", { name: en.HomePage.title }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Your vocabulary deck and review progress will appear here."),
-    ).toBeInTheDocument();
+    expect(screen.getByText(en.HomePage.intro)).toBeInTheDocument();
   });
 
-  it("renders no locale switcher, now that the app ships only one locale", async () => {
-    await renderHomePage();
+  it("renders due, rounded remembered, and unlearned figures", () => {
+    renderHome();
+
+    expect(
+      screen.getByText(en.HomePage.dueTodayLabel).nextElementSibling,
+    ).toHaveTextContent("2");
+    expect(
+      screen.getByText(en.HomePage.rememberedNowLabel).nextElementSibling,
+    ).toHaveTextContent("12");
+    expect(
+      screen.getByText(en.HomePage.unlearnedLabel).nextElementSibling,
+    ).toHaveTextContent("4");
+  });
+
+  it("omits the target ratio when no target is selected", () => {
+    renderHome();
+
+    expect(screen.queryByText(en.HomePage.targetRatioLabel)).not.toBeInTheDocument();
+  });
+
+  it("renders the rounded target ratio when a target is selected", () => {
+    renderHome({
+      scope: {
+        purpose: "ielts",
+        topics: [],
+        target: { exam: "ielts", score: 7 },
+      },
+      targetRatio: 0.625,
+    });
+
+    expect(screen.getByText(en.HomePage.targetRatioLabel)).toBeInTheDocument();
+    expect(screen.getByText("63%")).toBeInTheDocument();
+  });
+
+  it("links to study when the queue is non-empty", () => {
+    renderHome();
+
+    expect(screen.getByRole("link", { name: en.HomePage.start })).toHaveAttribute(
+      "href",
+      "/study",
+    );
+  });
+
+  it("disables Start and explains when the queue is empty", () => {
+    renderHome({ canStart: false, dueToday: 0 });
+
+    expect(screen.getByRole("button", { name: en.HomePage.start })).toBeDisabled();
+    expect(screen.getByText(en.HomePage.nothingToStudy)).toBeInTheDocument();
+  });
+
+  it("links to the card-generation guide for an empty valid deck", () => {
+    renderHome({ canStart: false, validCardCount: 0 });
+
+    expect(screen.getByText(en.HomePage.noCards)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: en.HomePage.generateCards }),
+    ).toHaveAttribute("href", "/.agents/skills/generating-cards/SKILL.md");
+  });
+
+  it("posts changed settings and refreshes after saving", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(Response.json({ scope: HOME_DATA.scope, newCardsPerDay: 12 }));
+    vi.stubGlobal("fetch", fetch);
+    renderHome();
+
+    fireEvent.change(screen.getByLabelText(en.HomePage.newCardsPerDayLabel), {
+      target: { value: "12" },
+    });
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/settings",
+        expect.objectContaining({
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            scope: HOME_DATA.scope,
+            newCardsPerDay: 12,
+          }),
+        }),
+      );
+      expect(refresh).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("serializes saves and keeps the newest change", async () => {
+    let resolveFirst!: (response: Response) => void;
+    let resolveSecond!: (response: Response) => void;
+    const first = new Promise<Response>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const second = new Promise<Response>((resolve) => {
+      resolveSecond = resolve;
+    });
+    const fetch = vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(second);
+    vi.stubGlobal("fetch", fetch);
+    renderHome();
+
+    const input = screen.getByLabelText(en.HomePage.newCardsPerDayLabel);
+    fireEvent.change(input, { target: { value: "11" } });
+    fireEvent.change(input, { target: { value: "12" } });
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    expect(fetch.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        body: JSON.stringify({
+          scope: HOME_DATA.scope,
+          newCardsPerDay: 11,
+        }),
+      }),
+    );
+    expect(refresh).not.toHaveBeenCalled();
+
+    act(() => {
+      resolveFirst(Response.json({ scope: HOME_DATA.scope, newCardsPerDay: 11 }));
+    });
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+    expect(fetch.mock.calls[1]?.[1]).toEqual(
+      expect.objectContaining({
+        body: JSON.stringify({
+          scope: HOME_DATA.scope,
+          newCardsPerDay: 12,
+        }),
+      }),
+    );
+    expect(refresh).toHaveBeenCalledOnce();
+
+    act(() => {
+      resolveSecond(Response.json({ scope: HOME_DATA.scope, newCardsPerDay: 12 }));
+    });
+    await waitFor(() => {
+      expect(refresh).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("renders no locale switcher for the single-locale app", () => {
+    renderHome();
 
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });

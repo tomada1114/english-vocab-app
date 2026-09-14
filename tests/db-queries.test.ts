@@ -3,6 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 import * as z from "zod";
 
+import { scopeSchema } from "../src/core/scope";
 import { openDatabase } from "../src/server/db/connection";
 import { DatabaseError } from "../src/server/db/errors";
 import { createStore, type Store } from "../src/server/db/queries";
@@ -415,6 +416,7 @@ describe("sessions", () => {
 
 describe("settings", () => {
   const newCardsPerDay = z.int().positive();
+  const initialScope = { purpose: "ielts", topics: ["education"], target: null };
 
   it("returns undefined for a key nobody has set", () => {
     expect(newStore().getSetting("newCardsPerDay", newCardsPerDay)).toBeUndefined();
@@ -447,6 +449,37 @@ describe("settings", () => {
     store.setSetting("newCardsPerDay", 25);
 
     expect(store.getSetting("newCardsPerDay", newCardsPerDay)).toBe(25);
+  });
+
+  it("replaces the scope and daily limit together", () => {
+    const store = newStore();
+    const replacement = {
+      scope: { purpose: "ielts", topics: ["environment"], target: null },
+      newCardsPerDay: 25,
+    };
+
+    store.replaceSettings(replacement);
+
+    expect(store.getSetting("scope", scopeSchema)).toStrictEqual(replacement.scope);
+    expect(store.getSetting("newCardsPerDay", newCardsPerDay)).toBe(25);
+  });
+
+  it("rolls back both settings when the second replacement write fails", () => {
+    const store = newStore();
+    store.replaceSettings({ scope: initialScope, newCardsPerDay: 10 });
+
+    const error = thrown(() => {
+      store.replaceSettings({
+        scope: { purpose: "ielts", topics: ["environment"], target: null },
+        // The first upsert must be rolled back when serializing the second
+        // value fails after the transaction has already started.
+        newCardsPerDay: undefined as unknown as number,
+      });
+    });
+
+    expect(error).toBeInstanceOf(Error);
+    expect(store.getSetting("scope", scopeSchema)).toStrictEqual(initialScope);
+    expect(store.getSetting("newCardsPerDay", newCardsPerDay)).toBe(10);
   });
 
   it("refuses a value that has no JSON form", () => {

@@ -2,14 +2,16 @@ import "server-only";
 
 import path from "node:path";
 
-import { loadCards } from "./cards";
+import { loadCards, loadLists, type VocabularyLists } from "./cards";
 import { openDatabase } from "./db/connection";
 import { createStore } from "./db/queries";
 import { readServerEnv } from "./env";
 import { createEndSessionHandler } from "./handlers/end-session";
 import { createRecordReviewHandler } from "./handlers/record-review";
+import { createSettingsHandler } from "./handlers/settings";
 import { createStartSessionHandler } from "./handlers/start-session";
 import type { SessionDependencies } from "./handlers/session-context";
+import { createHomePageReader, type HomePageData } from "./home";
 import type { RequestHandler } from "./http";
 import { createSessionSummaryReader, type SessionSummary } from "./summary";
 
@@ -23,13 +25,16 @@ import { createSessionSummaryReader, type SessionSummary } from "./summary";
  * database, which is one person's history and is pointed at by
  * `VOCAB_DB_PATH`.
  */
-const CARD_DIRECTORY = path.join(process.cwd(), "data", "cards");
+const DATA_DIRECTORY = path.join(process.cwd(), "data");
+const CARD_DIRECTORY = path.join(DATA_DIRECTORY, "cards");
 
 /** Everything this application wires, built once and shared by every request. */
 interface Wiring {
   readonly startSession: RequestHandler;
   readonly recordReview: RequestHandler;
   readonly endSession: RequestHandler;
+  readonly updateSettings: RequestHandler;
+  readonly readHome: () => Promise<HomePageData>;
   readonly readSummary: (sessionId: number) => SessionSummary | undefined;
 }
 
@@ -54,16 +59,21 @@ interface Wiring {
 function wire(): Wiring {
   const environment = readServerEnv({ requiresAccessKey: false });
   const store = createStore(openDatabase(environment.VOCAB_DB_PATH));
+  const readCards = async () => (await loadCards(CARD_DIRECTORY)).cards;
+  const readLists = (): Promise<VocabularyLists> => loadLists(DATA_DIRECTORY);
   const dependencies: SessionDependencies = {
     store,
-    readCards: async () => (await loadCards(CARD_DIRECTORY)).cards,
+    readCards,
     now: Date.now,
   };
+  const readHome = createHomePageReader({ store, readCards, readLists, now: Date.now });
 
   return {
     startSession: createStartSessionHandler(dependencies),
     recordReview: createRecordReviewHandler(dependencies),
     endSession: createEndSessionHandler(dependencies),
+    updateSettings: createSettingsHandler({ store, readLists }),
+    readHome,
     readSummary: createSessionSummaryReader(store),
   };
 }
@@ -94,6 +104,15 @@ export const recordReview: RequestHandler = (request) => wired().recordReview(re
 
 /** `POST /api/sessions/[id]/end`. */
 export const endSession: RequestHandler = (request) => wired().endSession(request);
+
+/** `POST /api/settings`. */
+export const updateSettings: RequestHandler = (request) =>
+  wired().updateSettings(request);
+
+/** The database-backed read model rendered by the Home page. */
+export function readHomePage(): Promise<HomePageData> {
+  return wired().readHome();
+}
 
 /** What the summary page renders, for a session id it takes from its own path. */
 export function readSessionSummary(sessionId: number): SessionSummary | undefined {

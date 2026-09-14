@@ -1,9 +1,11 @@
-import { hasLocale, useTranslations } from "next-intl";
+import { hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { use, type ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import { LOCALES } from "../../i18n/locales";
+import { readHomePage } from "../../server/composition";
+import { HomePageView } from "./home-page";
 
 /**
  * The one page this application ships, translated.
@@ -15,24 +17,19 @@ import { LOCALES } from "../../i18n/locales";
  * so a second locale is added by reverting that decision rather than
  * rebuilding the routing.
  */
-export default function HomePage({
+export const dynamic = "force-dynamic";
+
+export default async function HomePage({
   params,
 }: Readonly<{
   params: Promise<{ locale: string }>;
-}>): ReactElement {
-  const { locale } = use(params);
+}>): Promise<ReactElement> {
+  const { locale } = await params;
   if (!hasLocale(LOCALES, locale)) {
     notFound();
   }
   // eslint-disable-next-line @typescript-eslint/no-deprecated -- required by next-intl's legacy static-rendering API
   setRequestLocale(locale);
 
-  const t = useTranslations("HomePage");
-
-  return (
-    <main>
-      <h1>{t("title")}</h1>
-      <p>{t("intro")}</p>
-    </main>
-  );
+  return <HomePageView data={await readHomePage()} />;
 }
