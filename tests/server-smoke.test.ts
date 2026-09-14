@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { once } from "node:events";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import path from "node:path";
@@ -26,9 +26,6 @@ import { MESSAGES } from "../src/i18n/messages";
 
 /** The repository root, whose `.next` build `next start` serves. */
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
-
-/** The manifest that records the routes Next.js rendered during the build. */
-const prerenderManifestPath = path.join(repoRoot, ".next", "prerender-manifest.json");
 
 /** The `next` CLI, run through this process's own Node rather than a shell. */
 const nextCli = createRequire(import.meta.url).resolve("next/dist/bin/next");
@@ -110,21 +107,6 @@ function assertFreshBuild(): void {
       `This suite serves the output of \`pnpm build\`, and ${changed.join(", ")} changed after that build was written. Run \`pnpm build\` again: a build of code that is no longer here would pass these assertions without asserting anything about the change.`,
     );
   }
-}
-
-/** Read the build's static route table without trusting its JSON shape. */
-function readPrerenderedRoutes(): object {
-  const manifest: unknown = JSON.parse(readFileSync(prerenderManifestPath, "utf8"));
-  if (
-    typeof manifest !== "object" ||
-    manifest === null ||
-    !("routes" in manifest) ||
-    typeof manifest.routes !== "object" ||
-    manifest.routes === null
-  ) {
-    throw new TypeError("`.next/prerender-manifest.json` must contain a routes object");
-  }
-  return manifest.routes;
 }
 
 /**
@@ -362,11 +344,10 @@ afterAll(async () => {
 });
 
 describe("the built application, served by `next start`", () => {
-  it("prerenders every shipped locale", () => {
-    const routes = readPrerenderedRoutes();
-
+  it("serves every shipped locale, including the dynamic Home page", async () => {
     for (const locale of LOCALES) {
-      expect(routes).toHaveProperty(`/${locale}`);
+      const response = await fetch(`${baseUrl}/${locale}`);
+      expect(response.status).toBe(200);
     }
   });
 
@@ -408,6 +389,14 @@ describe("the built application, served by `next start`", () => {
       expect(document).not.toMatch(/<link[^>]*rel="alternate"/);
     },
   );
+
+  it("serves the card-generation guide linked by an empty Home deck", async () => {
+    const response = await fetch(`${baseUrl}/.agents/skills/generating-cards/SKILL.md`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/markdown");
+    expect(await response.text()).toContain("Card-generation guide");
+  });
 
   // Issue tracked by starting-an-app's locale decision: the app is
   // English-only for now, and `/ja` is what proves it — a request for a

@@ -21,9 +21,9 @@ function isTransaction(database: DatabaseSync): boolean {
  * Runs `work` inside one SQLite transaction, rolling back if it raises.
  *
  * @remarks
- * The store's two multi-statement writes — applying the pending migrations,
- * and recording one rating — are both all-or-nothing, and this is the single
- * place that spelling lives so neither can drift from the other.
+ * The store's multi-statement writes — applying pending migrations, recording
+ * one rating, and replacing settings — are all-or-nothing, and this is the
+ * single place that spelling lives so none can drift from the others.
  *
  * Nesting is rejected up front rather than left to fail inside SQLite: a
  * nested `BEGIN` raises with the outer transaction still open, which would

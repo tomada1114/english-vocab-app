@@ -65,6 +65,13 @@ export interface ReviewRecord {
   readonly after: SchedulingState;
 }
 
+/** The two settings replaced together by the settings endpoint. */
+export interface SettingsRecord {
+  /** The scope is validated by the caller that owns the scope schema. */
+  readonly scope: unknown;
+  readonly newCardsPerDay: number;
+}
+
 /** One `session` row, with `scope` parsed back out of its JSON column. */
 export interface Session {
   readonly id: number;

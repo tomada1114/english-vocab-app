@@ -12,6 +12,7 @@ import type {
   ReviewRecord,
   Session,
   SessionEnd,
+  SettingsRecord,
 } from "./records";
 import {
   cardStateParameters,
@@ -32,14 +33,8 @@ import { withTransaction } from "./transaction";
 /**
  * Every question and every change this application asks of its database.
  *
- * @remarks
- * The surface is deliberately small and closed: a caller reaches the store
- * through one of these, never by preparing SQL of its own, so the tables stay
- * something `migrations.ts` can change without hunting for query strings.
- *
- * Every method is synchronous, because `node:sqlite` is: the calls run against
- * a local file with no network in front of them, and wrapping them in promises
- * would only claim a concurrency the driver does not have.
+ * The surface is deliberately small and closed, and every method is
+ * synchronous because `node:sqlite` is.
  */
 export interface Store {
   /** Every card that has been rated at least once, in card-id order. */
@@ -76,6 +71,8 @@ export interface Store {
   getSetting<T>(key: string, schema: ZodType<T>): T | undefined;
   /** Stores `value` as JSON, replacing whatever the key held. */
   setSetting(key: string, value: unknown): void;
+  /** Replaces the scope and daily new-card limit as one atomic operation. */
+  replaceSettings(settings: SettingsRecord): void;
 }
 
 /**
@@ -186,6 +183,18 @@ export function createStore(database: DatabaseSync): Store {
 
     setSetting: (key, value) => {
       upsertSetting.run({ key, value: toJson(value, `setting "${key}"`) });
+    },
+    replaceSettings: (settings) => {
+      withTransaction(database, () => {
+        upsertSetting.run({
+          key: "scope",
+          value: toJson(settings.scope, 'setting "scope"'),
+        });
+        upsertSetting.run({
+          key: "newCardsPerDay",
+          value: toJson(settings.newCardsPerDay, 'setting "newCardsPerDay"'),
+        });
+      });
     },
   };
 }
