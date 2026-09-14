@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 
 import { Link } from "../../i18n/navigation";
 import type { HomePageData } from "../../server/home";
+import { ProgressCurve } from "./progress-curve";
 import { SettingsControls } from "./settings-controls";
 
 /** The synchronous Server Component used to render the Home read model. */
@@ -42,6 +43,7 @@ export function HomePageView({ data }: { readonly data: HomePageData }): ReactEl
           )}
         </dl>
       </section>
+      <ProgressCurve points={data.dailyCurve} />
       <section aria-labelledby="home-start-title">
         <h2 id="home-start-title">{t("startTitle")}</h2>
         {data.validCardCount === 0 ? (

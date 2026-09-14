@@ -1,15 +1,19 @@
 import "server-only";
 
+import type { Card } from "../core/cards/card";
+import { dailyCurve, type CurvePoint } from "../core/progress";
+import { scopeSchema } from "../core/scope";
 import type { Store } from "./db/queries";
+import { reviewsOf } from "./handlers/session-context";
 
 /**
  * What one finished session reads as.
  *
  * @remarks
- * Every figure is read back out of the `session` row and the log rather than
- * recomputed, so the summary shows the session that happened rather than what
- * the same scope would score now — a page reopened an hour later says the same
- * thing it said when the session ended.
+ * The before and after values are read back out of the `session` row so the
+ * summary shows the session that happened rather than what the same scope
+ * would score now. The curve is deliberately recomputed from current history
+ * for the scope the session captured.
  */
 export interface SessionSummary {
   /** How many ratings were recorded against the session. */
@@ -17,16 +21,24 @@ export interface SessionSummary {
   readonly rememberedBefore: number;
   /** `null` while the session was never ended. */
   readonly rememberedAfter: number | null;
+  /** The current curve for the scope captured when this session started. */
+  readonly dailyCurve: readonly CurvePoint[];
+}
+
+/** Runtime dependencies for the database-backed session summary. */
+export interface SessionSummaryDependencies {
+  readonly store: Store;
+  readonly readCards: () => Promise<readonly Card[]>;
+  readonly now: () => number;
 }
 
 /**
  * How many ratings `sessionId` collected.
  *
  * @remarks
- * Counted from the whole append-only log rather than by a query of its own:
- * the table is one person's review history, and a scan of it is cheaper than
- * the index a rarer question would cost to keep. `Store` gains a counting
- * query the day that stops being true.
+ * Counted from the whole append-only log. The storage optimization for this
+ * read belongs to issue #27; this function keeps the summary's current public
+ * behavior until that Store surface is migrated.
  */
 export function countSessionReviews(store: Store, sessionId: number): number {
   return store.listReviewLogs().filter((log) => log.sessionId === sessionId).length;
@@ -44,17 +56,27 @@ export function countSessionReviews(store: Store, sessionId: number): number {
  * page answers with its own 404 rather than an empty summary.
  */
 export function createSessionSummaryReader(
-  store: Store,
-): (sessionId: number) => SessionSummary | undefined {
-  return (sessionId) => {
-    const session = store.getSession(sessionId);
+  dependencies: SessionSummaryDependencies,
+): (sessionId: number) => Promise<SessionSummary | undefined> {
+  return async (sessionId) => {
+    const session = dependencies.store.getSession(sessionId);
     if (session === undefined) {
       return undefined;
     }
+    const scope = scopeSchema.parse(session.scope);
+    const cards = await dependencies.readCards();
     return {
-      reviewed: countSessionReviews(store, sessionId),
+      reviewed: countSessionReviews(dependencies.store, sessionId),
       rememberedBefore: session.rememberedBefore,
       rememberedAfter: session.rememberedAfter,
+      dailyCurve: dailyCurve(
+        {
+          cards,
+          reviews: reviewsOf(dependencies.store.listReviewLogs()),
+          scope,
+        },
+        dependencies.now(),
+      ),
     };
   };
 }

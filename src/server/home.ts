@@ -1,7 +1,13 @@
 import "server-only";
 
 import type { Card, Purpose } from "../core/cards/card";
-import { rememberedNow, targetRatio, unlearnedCount } from "../core/progress";
+import {
+  dailyCurve,
+  rememberedNow,
+  targetRatio,
+  unlearnedCount,
+  type CurvePoint,
+} from "../core/progress";
 import { dayBounds } from "../core/scheduler";
 import { inScope, type Scope } from "../core/scope";
 import { buildQueue } from "../core/session";
@@ -26,6 +32,7 @@ export interface HomePageData {
   readonly rememberedNow: number;
   readonly unlearnedCount: number;
   readonly targetRatio: number | null;
+  readonly dailyCurve: readonly CurvePoint[];
   readonly canStart: boolean;
 }
 
@@ -84,6 +91,7 @@ export function createHomePageReader(
       rememberedNow: rememberedNow(progress, nowMs),
       unlearnedCount: unlearnedCount(progress),
       targetRatio: targetRatio(progress, nowMs),
+      dailyCurve: dailyCurve(progress, nowMs),
       canStart: queue.length > 0,
     };
   };
