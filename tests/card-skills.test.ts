@@ -43,6 +43,10 @@ const blindAnswer = readSkillFile(path.join("references", "blind-answer.md"));
 const perspectiveReview = readSkillFile(
   path.join("references", "perspective-review.md"),
 );
+const adjudication = readSkillFile(path.join("references", "adjudication.md"));
+const levelAndSelection = readSkillFile(
+  path.join("references", "level-and-selection.md"),
+);
 const generatingSkill = readFileSync(
   path.join(generatingSkillRoot, "SKILL.md"),
   "utf8",
@@ -136,8 +140,27 @@ function sectionsAtLevel(source: string, level: number): Section[] {
 
 // --- the documented output shape ---------------------------------------------
 
-const TOP_LEVEL_KEYS: readonly string[] = ["lens", "findings", "answers"];
-const LENSES: readonly string[] = ["blind-answer", "perspective-review"];
+const TOP_LEVEL_KEYS: readonly string[] = [
+  "lens",
+  "findings",
+  "answers",
+  "rulings",
+  "missing",
+  "verdict",
+];
+const LENSES: readonly string[] = [
+  "blind-answer",
+  "perspective-review",
+  "adjudication",
+  "level-and-selection",
+];
+/** The top-level key each lens alone may return beside `lens` and `findings`. */
+const LENS_ONLY_KEYS: Readonly<Record<string, readonly string[]>> = {
+  "blind-answer": ["answers"],
+  "perspective-review": [],
+  adjudication: ["rulings"],
+  "level-and-selection": ["missing", "verdict"],
+};
 const REQUIRED_FINDING_KEYS: readonly string[] = [
   "id",
   "verdict",
@@ -222,8 +245,16 @@ function outputProblems(output: unknown): string[] {
       problems.push(`the example carries the undocumented top-level key "${key}"`);
     }
   }
-  if ("answers" in output && lens !== "blind-answer") {
-    problems.push(`only a blind-answer run returns "answers"`);
+  // Each extra top-level key belongs to exactly one lens: `answers` is the
+  // blind run's evidence, `rulings` the adjudication run's, and `missing` and
+  // `verdict` are what only a whole-batch lens can produce. An example that
+  // grew one of them under the wrong lens documents an output no caller parses.
+  for (const [owner, keys] of Object.entries(LENS_ONLY_KEYS)) {
+    for (const key of keys) {
+      if (key in output && lens !== owner) {
+        problems.push(`only a ${owner} run returns "${key}"`);
+      }
+    }
   }
   if ("answers" in output) {
     const answers = output["answers"];
@@ -277,6 +308,9 @@ describe("the generating-cards skill", () => {
       "C6. Keep one key per sense",
       "C7. Keep the back honest",
       "C8. Give every example a different context",
+      "C9. Keep every rival out of the front",
+      "C10. Declare the level honestly, or drop the word",
+      "C11. Balance the batch, not only the card",
     ]);
   });
 
@@ -303,14 +337,23 @@ describe("the reviewing-cards SKILL.md", () => {
     expect(skill).toContain("(references/perspective-review.md)");
   });
 
-  it("works one FIX example and one DROP example", () => {
-    const examples = fencedBlocks(skill).filter((block) => block.info === "json");
-    expect(examples).toHaveLength(2);
-    const parsed = examples.map((example) => JSON.parse(example.body) as unknown);
-    expect(parsed.flatMap(verdictsOf).sort()).toEqual(["DROP", "FIX"]);
+  it("links every lens reference", () => {
+    expect(skill).toContain("(references/adjudication.md)");
+    expect(skill).toContain("(references/level-and-selection.md)");
   });
 
-  it("matches its own documented output shape in both examples", () => {
+  it("works one example per lens, covering both verdicts", () => {
+    const examples = fencedBlocks(skill).filter((block) => block.info === "json");
+    expect(examples).toHaveLength(LENSES.length);
+    const parsed = examples.map((example) => JSON.parse(example.body) as unknown);
+    const lenses = parsed.map((output) =>
+      isRecord(output) ? output["lens"] : undefined,
+    );
+    expect(lenses).toEqual([...LENSES]);
+    expect([...new Set(parsed.flatMap(verdictsOf))].sort()).toEqual(["DROP", "FIX"]);
+  });
+
+  it("matches its own documented output shape in every example", () => {
     const parsed = fencedBlocks(skill)
       .filter((block) => block.info === "json")
       .map((example) => JSON.parse(example.body) as unknown);
@@ -357,5 +400,64 @@ describe("the perspective-review reference", () => {
   it.each(CRITERIA)("states %s in full under its heading", (title) => {
     const section = criteria.find((candidate) => candidate.title === title);
     expect(section?.body.trim().length ?? 0).toBeGreaterThan(300);
+  });
+});
+
+describe("the adjudication reference", () => {
+  const templates = fencedBlocks(adjudication).filter((block) => block.info === "text");
+
+  it("carries exactly one prompt template", () => {
+    expect(templates).toHaveLength(1);
+  });
+
+  it("feeds the template the rival beside the card, and nothing about the override", () => {
+    // The lens re-checks a judgement the calling session already made, so the
+    // one thing it must not receive is that session's reasoning: a stated
+    // reason is adopted rather than tested, which is the self-review this lens
+    // exists to break. The rival has to cross over — it is what is being
+    // adjudicated — and the answer word with it, since the ruling is whether
+    // the learner would produce the rival first.
+    const [template] = templates;
+    const placeholders = template?.body.match(/<[^<>\n]*>/gu) ?? [];
+    expect(placeholders).toEqual(["<rival>", "<headword>", "<definition>", "<cloze>"]);
+  });
+
+  it("states all three rulings, so a run never has to invent one", () => {
+    const [template] = templates;
+    for (const ruling of ["UPHELD", "REVERSED", "MARGINAL"]) {
+      expect(template?.body).toContain(ruling);
+    }
+  });
+});
+
+describe("the level-and-selection reference", () => {
+  const templates = fencedBlocks(levelAndSelection).filter(
+    (block) => block.info === "text",
+  );
+
+  it("carries exactly one prompt template", () => {
+    expect(templates).toHaveLength(1);
+  });
+
+  it("feeds the template the learner and the topics, never a purpose id", () => {
+    // `ielts` is a filter value and means nothing to a fresh run; what the
+    // learner is trying to do is the standard this lens judges against, so the
+    // template takes it as text rather than as the committed id.
+    const [template] = templates;
+    const placeholders = template?.body.match(/<[^<>\n]*>/gu) ?? [];
+    expect(placeholders).toEqual(["<learner>", "<topics>"]);
+  });
+
+  it("names all five judgements a run must return", () => {
+    const [template] = templates;
+    for (const judgement of [
+      "WRONG LEVEL",
+      "TOO EASY",
+      "LOW VALUE",
+      "BAD DEFINITION",
+      "MISSING",
+    ]) {
+      expect(template?.body).toContain(judgement);
+    }
   });
 });

@@ -83,3 +83,57 @@ card schema, file name and card Lint must agree with this block.
   ]
 }
 ```
+
+## C9. Keep every rival out of the front
+
+C2 asks the front to lead to one answer; the Lint enforces only the literal case, that
+the headword and its inflections are absent. The leak that survives both is a **plain
+synonym of the answer sitting in the definition**: "prevalent" defined as
+`common in a particular place`, "symptom" as `a sign in the body`, "toxic" as
+`containing poison`, "remedy" as `something that cures`, "deteriorate" as
+`to become worse over time`. Each hands the learner a word that answers the front as
+well as the headword does, and each was written by an author who could already see the
+answer and so could not see the giveaway.
+
+Before a definition is kept, read it as someone who does not know the answer and name
+the word it most points to. When that word is not the headword, the definition is
+describing the rival. Rewrite it around the situation the word is used in — what is
+being depleted, who is susceptible to what — rather than around a shorter word for the
+same idea.
+
+This rule is not about register. A definition may legitimately use a formal or an
+everyday cousin of the headword when no reader would submit it as the answer; it may
+never use the word a reader would actually write in the blank.
+
+## C10. Declare the level honestly, or drop the word
+
+`level` is the author's claim about where a learner meets the word, and a batch is
+filtered by it: a card declared inside the requested range but sitting a band below it
+is served forever to someone who already knows it, and spends a review slot that a word
+they do not know should have had.
+
+Judge the level against the word a learner actually produces, not against how the word
+looks. A transparent compound of two easy words (`wildlife`), a regular derivation of a
+known verb (`distraction`), and a word carried into the learner's first language as a
+loanword (`hygiene`, `seminar`) are all below B2 however academic the topic is.
+
+A word that turns out to sit below the batch's floor is **removed, not relabelled up**.
+Relabelling is what makes the level field stop meaning anything, and it is also how a
+batch passes an off-level check while carrying exactly the cards that check exists to
+keep out.
+
+## C11. Balance the batch, not only the card
+
+Every rule above judges one card. A batch also has a shape, and a batch of individually
+correct cards can still fail its purpose: 93 cards weighted 60 nouns to 11 verbs give a
+learner the things an argument is about and no way to say what should be done about
+them, so every sentence falls back on `do`, `make`, `help`, `stop` — which is what caps
+an exam script below the target band.
+
+Before the batch is handed over, count its parts of speech and ask what the learner will
+be able to _produce_ with it, not what they will recognise. For an exam purpose, the
+verbs and the evaluative adjectives are the load-bearing half; a topic noun is the easy
+half to write and the easy half to over-supply.
+
+Report the count with the batch. A skew the author names is a decision; a skew nobody
+counted is an accident that reaches the deck.
