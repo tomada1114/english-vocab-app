@@ -1,0 +1,14 @@
+{
+  "id": "seminar--noun",
+  "headword": "seminar",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "a small class where students discuss a topic",
+  "cloze": "Attendance at every ___ is required.",
+  "examples": [
+    "The seminar runs for ninety minutes.",
+    "He rarely speaks during seminars."
+  ]
+}

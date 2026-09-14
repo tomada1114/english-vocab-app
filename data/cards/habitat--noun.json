@@ -1,0 +1,14 @@
+{
+  "id": "habitat--noun",
+  "headword": "habitat",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the kind of natural surroundings a species needs to live in",
+  "cloze": "Logging has reduced the ___ available to forest species.",
+  "examples": [
+    "Coral reefs provide habitat for thousands of fish.",
+    "The zoo copies each animal's habitat closely."
+  ]
+}

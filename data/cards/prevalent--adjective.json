@@ -1,0 +1,14 @@
+{
+  "id": "prevalent--adjective",
+  "headword": "prevalent",
+  "pos": "adjective",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "found very widely within a particular place or group",
+  "cloze": "Diabetes is most ___ in older men.",
+  "examples": [
+    "Malaria remains prevalent near the delta.",
+    "Prevalent myths about diet still circulate widely."
+  ]
+}

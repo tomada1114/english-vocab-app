@@ -1,0 +1,14 @@
+{
+  "id": "longevity--noun",
+  "headword": "longevity",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "the fact of reaching a very great age",
+  "cloze": "Diet partly explains the island's remarkable ___.",
+  "examples": [
+    "Longevity runs in her family.",
+    "Researchers link longevity to daily walking."
+  ]
+}

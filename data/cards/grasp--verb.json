@@ -1,0 +1,14 @@
+{
+  "id": "grasp--verb",
+  "headword": "grasp",
+  "pos": "verb",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "to take in the meaning of an idea at once",
+  "cloze": "Few pupils ___ the concept on the first attempt.",
+  "examples": [
+    "He finally grasped why she resigned.",
+    "I never grasped why the rule exists."
+  ]
+}

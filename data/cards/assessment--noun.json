@@ -1,0 +1,14 @@
+{
+  "id": "assessment--noun",
+  "headword": "assessment",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "the act of judging how good or how much something is",
+  "cloze": "Continuous ___ replaced the single final exam.",
+  "examples": [
+    "The assessment counts for half the grade.",
+    "She dreaded the surprise assessment on Friday."
+  ]
+}

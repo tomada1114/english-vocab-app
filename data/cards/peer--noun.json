@@ -1,0 +1,14 @@
+{
+  "id": "peer--noun",
+  "headword": "peer",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "someone of the same age or position as you",
+  "cloze": "Students learn quickly from their ___.",
+  "examples": [
+    "Peer pressure shapes many teenage choices.",
+    "Her peers elected her class representative."
+  ]
+}

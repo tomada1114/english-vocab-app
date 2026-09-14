@@ -1,0 +1,14 @@
+{
+  "id": "extracurricular--adjective",
+  "headword": "extracurricular",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "happening outside the normal set of lessons",
+  "cloze": "Universities look closely at ___ activities.",
+  "examples": [
+    "Extracurricular clubs meet on Friday afternoons.",
+    "She had no time for extracurricular sport."
+  ]
+}

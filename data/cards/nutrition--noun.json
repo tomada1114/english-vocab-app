@@ -1,0 +1,14 @@
+{
+  "id": "nutrition--noun",
+  "headword": "nutrition",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "the nourishment that food gives to the body",
+  "cloze": "Poor ___ slows a child's growth.",
+  "examples": [
+    "The school teaches nutrition alongside cooking.",
+    "Nutrition labels help shoppers choose healthier foods."
+  ]
+}

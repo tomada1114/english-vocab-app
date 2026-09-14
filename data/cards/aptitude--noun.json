@@ -1,0 +1,14 @@
+{
+  "id": "aptitude--noun",
+  "headword": "aptitude",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "a natural ability to learn something quickly",
+  "cloze": "The exam is designed to reveal ___ for languages.",
+  "examples": [
+    "He showed real aptitude for design.",
+    "Aptitude tests decide who joins the programme."
+  ]
+}

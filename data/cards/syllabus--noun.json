@@ -1,0 +1,14 @@
+{
+  "id": "syllabus--noun",
+  "headword": "syllabus",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "the list of topics that one course will cover",
+  "cloze": "The ___ for this module is online.",
+  "examples": [
+    "The syllabus lists four set texts.",
+    "Exam questions must follow the syllabus."
+  ]
+}

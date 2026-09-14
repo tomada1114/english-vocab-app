@@ -1,0 +1,14 @@
+{
+  "id": "degradation--noun",
+  "headword": "degradation",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the loss of quality in land from overuse or chemicals",
+  "cloze": "Overgrazing has caused severe ___ across the plain.",
+  "examples": [
+    "Land degradation forces farmers to move.",
+    "The report documented severe degradation across farmland."
+  ]
+}

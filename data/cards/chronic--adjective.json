@@ -1,0 +1,14 @@
+{
+  "id": "chronic--adjective",
+  "headword": "chronic",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "lasting a long time and hard to cure",
+  "cloze": "She has suffered ___ back pain for years.",
+  "examples": [
+    "Chronic illness affects millions of workers.",
+    "Air pollution causes chronic breathing problems."
+  ]
+}

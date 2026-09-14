@@ -1,0 +1,14 @@
+{
+  "id": "tuition--noun",
+  "headword": "tuition",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "money paid for teaching at a university",
+  "cloze": "Many students borrow to cover their ___ fees.",
+  "examples": [
+    "Tuition rose again this September.",
+    "The grant covers tuition but not rent."
+  ]
+}

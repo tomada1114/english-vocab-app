@@ -1,0 +1,14 @@
+{
+  "id": "facilitate--verb",
+  "headword": "facilitate",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "to remove obstacles so something happens more easily",
+  "cloze": "Small classes ___ discussion between students.",
+  "examples": [
+    "Online tools facilitate group projects.",
+    "The grant facilitated her research abroad."
+  ]
+}

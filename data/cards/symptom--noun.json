@@ -1,0 +1,14 @@
+{
+  "id": "symptom--noun",
+  "headword": "symptom",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "something a patient feels that points to an illness",
+  "cloze": "A high fever is the first ___.",
+  "examples": [
+    "Symptoms appear two days after infection.",
+    "She ignored the symptoms for weeks."
+  ]
+}

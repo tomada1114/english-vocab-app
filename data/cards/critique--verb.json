@@ -1,0 +1,14 @@
+{
+  "id": "critique--verb",
+  "headword": "critique",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "to judge something carefully and say what is wrong",
+  "cloze": "Students ___ each other's essays in pairs.",
+  "examples": [
+    "The tutor critiques my argument gently.",
+    "Reviewers critique the method, not the writer."
+  ]
+}

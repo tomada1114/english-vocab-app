@@ -1,0 +1,14 @@
+{
+  "id": "vaccination--noun",
+  "headword": "vaccination",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "giving someone a substance that protects against a disease",
+  "cloze": "___ rates fell during the lockdown.",
+  "examples": [
+    "Vaccination is free for young children.",
+    "The clinic offers vaccination every Tuesday."
+  ]
+}

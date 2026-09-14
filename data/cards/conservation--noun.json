@@ -1,0 +1,14 @@
+{
+  "id": "conservation--noun",
+  "headword": "conservation",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the work of protecting nature from harm or loss",
+  "cloze": "The park was created for the ___ of rare plants.",
+  "examples": [
+    "Conservation groups bought the forest last year.",
+    "She studies marine conservation at university."
+  ]
+}

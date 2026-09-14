@@ -1,0 +1,14 @@
+{
+  "id": "rehabilitation--noun",
+  "headword": "rehabilitation",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "treatment that trains someone to regain lost abilities",
+  "cloze": "___ after a stroke takes many months.",
+  "examples": [
+    "The hospital runs a rehabilitation unit.",
+    "Rehabilitation helped him walk unaided again."
+  ]
+}

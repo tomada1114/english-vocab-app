@@ -1,0 +1,14 @@
+{
+  "id": "curriculum--noun",
+  "headword": "curriculum",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "the whole set of subjects taught at a school",
+  "cloze": "Coding was added to the national ___ last year.",
+  "examples": [
+    "The curriculum leaves little room for art.",
+    "Teachers helped design the new curriculum."
+  ]
+}

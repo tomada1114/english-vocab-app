@@ -1,0 +1,14 @@
+{
+  "id": "consumption--noun",
+  "headword": "consumption",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the amount of something that people use up",
+  "cloze": "Household water ___ rises sharply every summer.",
+  "examples": [
+    "Meat consumption has fallen among young people.",
+    "The label shows the car's fuel consumption."
+  ]
+}

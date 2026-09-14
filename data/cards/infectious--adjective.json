@@ -1,0 +1,14 @@
+{
+  "id": "infectious--adjective",
+  "headword": "infectious",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "able to pass from one person to another",
+  "cloze": "Measles is highly ___ in crowded rooms.",
+  "examples": [
+    "The ward isolates infectious patients.",
+    "He stayed home while still infectious."
+  ]
+}

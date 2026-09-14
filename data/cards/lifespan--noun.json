@@ -1,0 +1,14 @@
+{
+  "id": "lifespan--noun",
+  "headword": "lifespan",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "the number of years one individual is expected to live",
+  "cloze": "Clean water alone raised the average ___.",
+  "examples": [
+    "Smoking shortens lifespan by ten years.",
+    "The lifespan of a mouse is short."
+  ]
+}

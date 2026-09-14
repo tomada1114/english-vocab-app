@@ -1,0 +1,14 @@
+{
+  "id": "undergraduate--noun",
+  "headword": "undergraduate",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "a student studying for a first university degree",
+  "cloze": "The lecture is open to every first-year ___.",
+  "examples": [
+    "Undergraduates outnumber staff ten to one.",
+    "As an undergraduate she studied law."
+  ]
+}

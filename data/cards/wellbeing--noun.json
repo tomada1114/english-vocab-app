@@ -1,0 +1,14 @@
+{
+  "id": "wellbeing--noun",
+  "headword": "wellbeing",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "the state of feeling comfortable, healthy and happy",
+  "cloze": "Long hours damage the ___ of staff.",
+  "examples": [
+    "The company runs a wellbeing programme.",
+    "Exercise improves wellbeing as much as mood."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "wildlife--noun",
+  "headword": "wildlife",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "animals and birds living free in natural places",
+  "cloze": "The new road cuts through an important ___ corridor.",
+  "examples": [
+    "Wildlife returned once hunting was banned.",
+    "Volunteers count wildlife along the river."
+  ]
+}

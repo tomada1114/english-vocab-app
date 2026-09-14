@@ -1,0 +1,14 @@
+{
+  "id": "relapse--noun",
+  "headword": "relapse",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "a return of an illness after a period of improvement",
+  "cloze": "He suffered a ___ three months later.",
+  "examples": [
+    "Fear of relapse keeps her cautious.",
+    "Doctors watch closely for signs of relapse."
+  ]
+}

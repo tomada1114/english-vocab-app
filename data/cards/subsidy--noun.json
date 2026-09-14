@@ -1,0 +1,14 @@
+{
+  "id": "subsidy--noun",
+  "headword": "subsidy",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "money a government gives to support an activity",
+  "cloze": "Solar panels became cheap after the ___ was introduced.",
+  "examples": [
+    "Every farmer here relies on a subsidy.",
+    "The subsidy for coal ended last year."
+  ]
+}

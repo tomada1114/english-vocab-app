@@ -1,0 +1,14 @@
+{
+  "id": "retention--noun",
+  "headword": "retention",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "keeping students or facts rather than losing them",
+  "cloze": "Better teaching improved ___ in the first year.",
+  "examples": [
+    "Retention of vocabulary improves with spacing.",
+    "The college reports poor student retention."
+  ]
+}

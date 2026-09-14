@@ -1,0 +1,14 @@
+{
+  "id": "susceptible--adjective",
+  "headword": "susceptible",
+  "pos": "adjective",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "easily harmed or affected by something",
+  "cloze": "Newborn babies are ___ to infection.",
+  "examples": [
+    "Some people are susceptible to hay fever.",
+    "Poor sleep leaves the body more susceptible."
+  ]
+}

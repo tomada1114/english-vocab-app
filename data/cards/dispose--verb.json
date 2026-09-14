@@ -1,0 +1,14 @@
+{
+  "id": "dispose--verb",
+  "headword": "dispose",
+  "pos": "verb",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "to get rid of something you no longer want",
+  "cloze": "Factories must ___ of chemical waste safely.",
+  "examples": [
+    "Never dispose of batteries in normal bins.",
+    "I dispose of old paperwork every year."
+  ]
+}

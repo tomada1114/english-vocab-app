@@ -1,0 +1,14 @@
+{
+  "id": "erosion--noun",
+  "headword": "erosion",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the slow wearing away of land by water or wind",
+  "cloze": "Tree roots hold the bank and prevent ___.",
+  "examples": [
+    "Coastal erosion has swallowed several houses.",
+    "Heavy rain speeds up soil erosion."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "compulsory--adjective",
+  "headword": "compulsory",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "required by a rule, so you cannot refuse",
+  "cloze": "Science is ___ until the age of sixteen.",
+  "examples": [
+    "Uniform is compulsory in most schools.",
+    "Compulsory training bores most new employees."
+  ]
+}

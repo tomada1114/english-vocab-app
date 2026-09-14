@@ -1,0 +1,14 @@
+{
+  "id": "irreversible--adjective",
+  "headword": "irreversible",
+  "pos": "adjective",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "impossible to change back to how it was before",
+  "cloze": "Melting ice sheets may cause ___ sea level rise.",
+  "examples": [
+    "The damage to the reef is irreversible.",
+    "The scandal caused irreversible harm to her reputation."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "sewage--noun",
+  "headword": "sewage",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "waste water and human waste carried away in pipes",
+  "cloze": "Untreated ___ was flowing straight into the bay.",
+  "examples": [
+    "The plant treats sewage from four towns.",
+    "The town finally upgraded its sewage system."
+  ]
+}

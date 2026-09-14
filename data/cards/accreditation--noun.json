@@ -1,0 +1,14 @@
+{
+  "id": "accreditation--noun",
+  "headword": "accreditation",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "official recognition that an institution meets a required standard",
+  "cloze": "The college lost its ___ after the inspection.",
+  "examples": [
+    "Accreditation must be renewed every five years.",
+    "Employers check accreditation before hiring graduates."
+  ]
+}

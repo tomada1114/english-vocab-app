@@ -1,0 +1,14 @@
+{
+  "id": "rote--noun",
+  "headword": "rote",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "learning by repeating something until you remember it",
+  "cloze": "Maths taught by ___ leaves pupils unable to reason.",
+  "examples": [
+    "The class learned irregular verbs by rote.",
+    "Rote has little place in modern teaching."
+  ]
+}

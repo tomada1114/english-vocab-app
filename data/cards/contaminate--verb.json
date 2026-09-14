@@ -1,0 +1,14 @@
+{
+  "id": "contaminate--verb",
+  "headword": "contaminate",
+  "pos": "verb",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment", "health"],
+  "definition": "to make something dirty or unsafe by adding a harmful substance",
+  "cloze": "Waste from the mine can ___ the village water supply.",
+  "examples": [
+    "Floodwater contaminated the wells for months.",
+    "Poor storage contaminated the whole batch."
+  ]
+}

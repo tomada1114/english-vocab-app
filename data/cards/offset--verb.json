@@ -1,0 +1,14 @@
+{
+  "id": "offset--verb",
+  "headword": "offset",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "to cancel out a bad effect with a separate good action",
+  "cloze": "Airlines let passengers ___ their flights by planting trees.",
+  "examples": [
+    "New parks offset some pollution from the motorway.",
+    "Savings on fuel offset the higher ticket price."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "arable--adjective",
+  "headword": "arable",
+  "pos": "adjective",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "able to be ploughed for growing crops",
+  "cloze": "Only a tenth of the country is ___ land.",
+  "examples": [
+    "Arable farming dominates the eastern plain.",
+    "Rising salt levels ruined arable soil."
+  ]
+}

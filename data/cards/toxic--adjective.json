@@ -1,0 +1,14 @@
+{
+  "id": "toxic--adjective",
+  "headword": "toxic",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment", "health"],
+  "definition": "harmful to living things when swallowed or breathed in",
+  "cloze": "The factory released ___ fumes into the air.",
+  "examples": [
+    "Some cleaning products are highly toxic.",
+    "Toxic metals built up in the fish."
+  ]
+}

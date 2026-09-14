@@ -1,0 +1,14 @@
+{
+  "id": "plagiarism--noun",
+  "headword": "plagiarism",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "using someone else's words as if they were your own",
+  "cloze": "The essay was rejected for ___.",
+  "examples": [
+    "The university expelled him for plagiarism.",
+    "Software checks every essay for plagiarism."
+  ]
+}

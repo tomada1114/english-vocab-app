@@ -1,0 +1,14 @@
+{
+  "id": "moderation--noun",
+  "headword": "moderation",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "doing something within sensible limits",
+  "cloze": "Alcohol is safe only in ___.",
+  "examples": [
+    "He shows moderation when spending his salary.",
+    "Moderation matters more than any diet."
+  ]
+}

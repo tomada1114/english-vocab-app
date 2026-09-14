@@ -1,0 +1,14 @@
+{
+  "id": "remedy--noun",
+  "headword": "remedy",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "something that cures a problem or an illness",
+  "cloze": "Honey is an old ___ for a sore throat.",
+  "examples": [
+    "There is no simple remedy for stress.",
+    "Doctors dismissed the remedy as useless."
+  ]
+}

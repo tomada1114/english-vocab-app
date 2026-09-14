@@ -1,0 +1,14 @@
+{
+  "id": "endangered--adjective",
+  "headword": "endangered",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "at serious risk of disappearing completely as a species",
+  "cloze": "Only two hundred of these ___ birds remain.",
+  "examples": [
+    "Tigers are endangered across most of Asia.",
+    "The law protects endangered plants too."
+  ]
+}

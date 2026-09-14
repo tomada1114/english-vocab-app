@@ -1,0 +1,14 @@
+{
+  "id": "truancy--noun",
+  "headword": "truancy",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "staying away from school without permission",
+  "cloze": "Fines for ___ rarely change pupils' behaviour.",
+  "examples": [
+    "Truancy rose sharply during the strike.",
+    "The council employs officers to tackle truancy."
+  ]
+}

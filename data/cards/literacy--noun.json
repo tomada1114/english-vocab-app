@@ -1,0 +1,14 @@
+{
+  "id": "literacy--noun",
+  "headword": "literacy",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "the ability to read and write",
+  "cloze": "The programme raised adult ___ across the district.",
+  "examples": [
+    "Literacy rates improved after the reform.",
+    "The charity teaches literacy to older women."
+  ]
+}

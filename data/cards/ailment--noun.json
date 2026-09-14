@@ -1,0 +1,14 @@
+{
+  "id": "ailment--noun",
+  "headword": "ailment",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "an illness that is not very serious",
+  "cloze": "Pharmacists can treat a minor ___.",
+  "examples": [
+    "Older patients arrive with several ailments.",
+    "The herb was used for common ailments."
+  ]
+}

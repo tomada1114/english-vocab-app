@@ -1,0 +1,14 @@
+{
+  "id": "curb--verb",
+  "headword": "curb",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "to control something bad and stop it growing",
+  "cloze": "New rules aim to ___ the use of plastic bags.",
+  "examples": [
+    "The city curbed traffic in the old centre.",
+    "Parents try to curb screen time at home."
+  ]
+}

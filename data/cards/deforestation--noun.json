@@ -1,0 +1,14 @@
+{
+  "id": "deforestation--noun",
+  "headword": "deforestation",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the cutting down of trees over a large area",
+  "cloze": "___ in the Amazon slowed slightly last year.",
+  "examples": [
+    "Deforestation threatens thousands of rare species.",
+    "Beef farming drives deforestation in Brazil."
+  ]
+}
