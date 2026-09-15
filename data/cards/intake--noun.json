@@ -5,10 +5,10 @@
   "level": "C1",
   "purposes": ["ielts"],
   "topics": ["health"],
-  "definition": "the measured daily amount of one substance entering the body",
+  "definition": "the amount of a substance that someone takes into the body",
   "cloze": "Doctors advise cutting daily salt ___.",
   "examples": [
     "Her calorie intake dropped sharply.",
-    "Water intake matters most in hot weather."
+    "Nurses recorded her intake of fluids after surgery."
   ]
 }

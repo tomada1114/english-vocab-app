@@ -5,10 +5,10 @@
   "level": "B2",
   "purposes": ["ielts"],
   "topics": ["health"],
-  "definition": "the number of years one individual is expected to live",
-  "cloze": "Clean water alone raised the average ___.",
+  "definition": "the length of time one person or animal actually lives",
+  "cloze": "Smaller dog breeds usually have a longer ___.",
   "examples": [
     "Smoking shortens lifespan by ten years.",
-    "The lifespan of a mouse is short."
+    "Poor diet can shorten a person's lifespan."
   ]
 }

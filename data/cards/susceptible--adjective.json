@@ -5,10 +5,10 @@
   "level": "C1",
   "purposes": ["ielts"],
   "topics": ["health"],
-  "definition": "easily harmed or affected by something",
-  "cloze": "Newborn babies are ___ to infection.",
+  "definition": "likely to be affected by a particular illness or influence",
+  "cloze": "People with asthma are especially ___ to air pollution.",
   "examples": [
-    "Some people are susceptible to hay fever.",
+    "Young trees are susceptible to frost damage.",
     "Poor sleep leaves the body more susceptible."
   ]
 }

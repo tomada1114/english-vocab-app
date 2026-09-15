@@ -5,10 +5,10 @@
   "level": "C1",
   "purposes": ["ielts"],
   "topics": ["education"],
-  "definition": "keeping students or facts rather than losing them",
+  "definition": "the share of students, staff or learning that is not lost",
   "cloze": "Better teaching improved ___ in the first year.",
   "examples": [
-    "Retention of vocabulary improves with spacing.",
+    "Retention improved after the college added tutors.",
     "The college reports poor student retention."
   ]
 }

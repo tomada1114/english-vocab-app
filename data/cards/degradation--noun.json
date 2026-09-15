@@ -5,10 +5,10 @@
   "level": "C1",
   "purposes": ["ielts"],
   "topics": ["environment"],
-  "definition": "the loss of quality in land from overuse or chemicals",
+  "definition": "the steady decline of the environment or of living conditions",
   "cloze": "Overgrazing has caused severe ___ across the plain.",
   "examples": [
     "Land degradation forces farmers to move.",
-    "The report documented severe degradation across farmland."
+    "Chemical spills accelerated degradation along the riverbank."
   ]
 }

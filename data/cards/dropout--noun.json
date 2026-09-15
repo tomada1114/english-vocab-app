@@ -6,9 +6,9 @@
   "purposes": ["ielts"],
   "topics": ["education"],
   "definition": "a student who leaves a course before finishing",
-  "cloze": "The ___ rate doubled during the pandemic.",
+  "cloze": "He became a ___ after failing two courses.",
   "examples": [
     "Most dropouts return to study later.",
-    "He was a university dropout at twenty."
+    "Dropouts often struggle to find steady work."
   ]
 }

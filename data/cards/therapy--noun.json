@@ -5,10 +5,10 @@
   "level": "B2",
   "purposes": ["ielts"],
   "topics": ["health"],
-  "definition": "treatment that helps someone recover without surgery",
+  "definition": "treatment for an illness, injury or mental difficulty, usually over time",
   "cloze": "Speech ___ helped him talk again.",
   "examples": [
-    "Many employees now attend therapy weekly.",
+    "Physical therapy restored movement in her shoulder.",
     "He started therapy after the accident."
   ]
 }

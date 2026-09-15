@@ -5,10 +5,10 @@
   "level": "B2",
   "purposes": ["ielts"],
   "topics": ["health"],
-  "definition": "protected against a disease so you cannot catch it",
+  "definition": "protected against a disease and so unlikely to catch it",
   "cloze": "Most adults are ___ to measles.",
   "examples": [
     "Vaccines make children immune to polio.",
-    "Nobody is immune to the new strain."
+    "Anyone vaccinated in childhood should still be immune."
   ]
 }

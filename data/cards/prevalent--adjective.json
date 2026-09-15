@@ -5,10 +5,10 @@
   "level": "C1",
   "purposes": ["ielts"],
   "topics": ["health"],
-  "definition": "found very widely within a particular place or group",
+  "definition": "widespread in a place or at a particular time",
   "cloze": "Diabetes is most ___ in older men.",
   "examples": [
     "Malaria remains prevalent near the delta.",
-    "Prevalent myths about diet still circulate widely."
+    "Smoking was more prevalent among older workers."
   ]
 }
