@@ -1,0 +1,14 @@
+{
+  "id": "apprenticeship--noun",
+  "headword": "apprenticeship",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "a job where a young person learns a skilled trade",
+  "cloze": "He started an ___ with a local builder.",
+  "examples": [
+    "Apprenticeships last between two and four years.",
+    "She finished her apprenticeship as an engineer."
+  ]
+}

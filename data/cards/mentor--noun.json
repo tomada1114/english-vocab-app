@@ -1,0 +1,14 @@
+{
+  "id": "mentor--noun",
+  "headword": "mentor",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "an experienced person who advises someone younger",
+  "cloze": "Every new student is assigned a ___.",
+  "examples": [
+    "Her mentor read every draft chapter.",
+    "Good mentors ask questions rather than answer."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "intake--noun",
+  "headword": "intake",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "the amount of a substance that someone takes into the body",
+  "cloze": "Doctors advise cutting daily salt ___.",
+  "examples": [
+    "Her calorie intake dropped sharply.",
+    "Nurses recorded her intake of fluids after surgery."
+  ]
+}

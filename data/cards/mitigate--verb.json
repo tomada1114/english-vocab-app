@@ -1,0 +1,14 @@
+{
+  "id": "mitigate--verb",
+  "headword": "mitigate",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "to make the effect of something bad less serious",
+  "cloze": "Sea walls cannot fully ___ the damage from storms.",
+  "examples": [
+    "Regular exercise can mitigate the effects of stress.",
+    "Shade trees mitigate summer heat in cities."
+  ]
+}

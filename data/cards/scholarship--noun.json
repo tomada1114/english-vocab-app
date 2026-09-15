@@ -1,0 +1,14 @@
+{
+  "id": "scholarship--noun",
+  "headword": "scholarship",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "money given to a student to pay for study",
+  "cloze": "She won a full ___ to study abroad.",
+  "examples": [
+    "The scholarship covers three years of fees.",
+    "Only two scholarships are offered annually."
+  ]
+}

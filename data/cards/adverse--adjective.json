@@ -1,0 +1,14 @@
+{
+  "id": "adverse--adjective",
+  "headword": "adverse",
+  "pos": "adjective",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment", "health"],
+  "definition": "working against what someone wants, and causing harm",
+  "cloze": "The drug was withdrawn after several ___ reactions.",
+  "examples": [
+    "Adverse weather delayed the rescue teams.",
+    "The report found no adverse effects."
+  ]
+}

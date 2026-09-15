@@ -1,0 +1,14 @@
+{
+  "id": "scarce--adjective",
+  "headword": "scarce",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "not easy to get, because there is too little of it",
+  "cloze": "Clean water is becoming ___ across the region.",
+  "examples": [
+    "Jobs were scarce after the factory closed.",
+    "Fresh vegetables grow scarce each winter."
+  ]
+}

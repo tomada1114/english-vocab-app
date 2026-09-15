@@ -1,0 +1,14 @@
+{
+  "id": "immune--adjective",
+  "headword": "immune",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "protected against a disease and so unlikely to catch it",
+  "cloze": "Most adults are ___ to measles.",
+  "examples": [
+    "Vaccines make children immune to polio.",
+    "Anyone vaccinated in childhood should still be immune."
+  ]
+}

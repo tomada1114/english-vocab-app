@@ -1,0 +1,14 @@
+{
+  "id": "therapy--noun",
+  "headword": "therapy",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "treatment for an illness, injury or mental difficulty, usually over time",
+  "cloze": "Speech ___ helped him talk again.",
+  "examples": [
+    "Physical therapy restored movement in her shoulder.",
+    "He started therapy after the accident."
+  ]
+}

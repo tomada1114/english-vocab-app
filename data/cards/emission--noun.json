@@ -1,0 +1,14 @@
+{
+  "id": "emission--noun",
+  "headword": "emission",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "gases released into the air by vehicles or industry, normally used in the plural",
+  "cloze": "The country promised to cut carbon ___ by half.",
+  "examples": [
+    "Electric buses produce no emissions downtown.",
+    "The factory must report its emissions every year."
+  ]
+}

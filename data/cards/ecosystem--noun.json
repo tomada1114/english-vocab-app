@@ -1,0 +1,14 @@
+{
+  "id": "ecosystem--noun",
+  "headword": "ecosystem",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "all the living things in one place and how they depend on each other",
+  "cloze": "Removing one predator can upset the whole ___.",
+  "examples": [
+    "Wetlands form one of the richest ecosystems.",
+    "The oil spill destroyed a coastal ecosystem."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "curb--verb",
+  "headword": "curb",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "to keep something harmful under control so it stops increasing",
+  "cloze": "Raising interest rates is intended to ___ inflation.",
+  "examples": [
+    "The city curbed traffic in the old centre.",
+    "Parents try to curb screen time at home."
+  ]
+}

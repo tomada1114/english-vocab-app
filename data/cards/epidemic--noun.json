@@ -1,0 +1,14 @@
+{
+  "id": "epidemic--noun",
+  "headword": "epidemic",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "a disease spreading quickly through many people at once",
+  "cloze": "The ___ reached every province in three months.",
+  "examples": [
+    "Doctors contained the epidemic within weeks.",
+    "Sugary drinks fuelled an epidemic of tooth decay."
+  ]
+}

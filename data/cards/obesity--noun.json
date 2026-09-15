@@ -1,0 +1,14 @@
+{
+  "id": "obesity--noun",
+  "headword": "obesity",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "the state of being extremely overweight",
+  "cloze": "Childhood ___ has tripled in thirty years.",
+  "examples": [
+    "Obesity raises the risk of diabetes.",
+    "The clinic treats obesity with diet and exercise."
+  ]
+}

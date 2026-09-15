@@ -1,0 +1,14 @@
+{
+  "id": "burnout--noun",
+  "headword": "burnout",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "exhaustion and loss of motivation caused by prolonged work stress",
+  "cloze": "Half the nurses reported signs of ___.",
+  "examples": [
+    "Burnout forced her to take leave.",
+    "He quit teaching after severe burnout."
+  ]
+}

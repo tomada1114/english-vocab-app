@@ -1,0 +1,14 @@
+{
+  "id": "intellectual--adjective",
+  "headword": "intellectual",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "using or needing careful thought",
+  "cloze": "Chess offers real ___ challenge.",
+  "examples": [
+    "The course demands sustained intellectual effort.",
+    "He enjoys intellectual debate over dinner."
+  ]
+}

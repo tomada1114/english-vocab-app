@@ -1,0 +1,14 @@
+{
+  "id": "pollutant--noun",
+  "headword": "pollutant",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment", "health"],
+  "definition": "a harmful substance that industry or traffic releases",
+  "cloze": "Diesel engines release a ___ that damages young lungs.",
+  "examples": [
+    "The river carries pollutants from nearby farms.",
+    "New filters trap most pollutants."
+  ]
+}

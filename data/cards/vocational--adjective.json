@@ -1,0 +1,14 @@
+{
+  "id": "vocational--adjective",
+  "headword": "vocational",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "training people for a particular job or trade",
+  "cloze": "He left school at sixteen for a ___ course.",
+  "examples": [
+    "Vocational colleges train plumbers and electricians.",
+    "She chose a vocational route, not university."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "abundant--adjective",
+  "headword": "abundant",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "present in very large amounts",
+  "cloze": "Sunlight is ___ here, so solar power makes sense.",
+  "examples": [
+    "Fish were once abundant in these waters.",
+    "This region has abundant wildlife."
+  ]
+}

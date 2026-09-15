@@ -1,0 +1,14 @@
+{
+  "id": "grasp--verb",
+  "headword": "grasp",
+  "pos": "verb",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "to take in the meaning of a difficult idea and hold it firmly",
+  "cloze": "It took her a while to ___ what the figures meant.",
+  "examples": [
+    "He finally grasped why she resigned.",
+    "Students grasp fractions faster with simple diagrams."
+  ]
+}

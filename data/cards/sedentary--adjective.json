@@ -1,0 +1,14 @@
+{
+  "id": "sedentary--adjective",
+  "headword": "sedentary",
+  "pos": "adjective",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "spending long periods sitting and moving very little",
+  "cloze": "Office workers often lead a ___ life.",
+  "examples": [
+    "A sedentary job weakens the back.",
+    "Retirement left him increasingly sedentary."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "deplete--verb",
+  "headword": "deplete",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "to reduce a supply so that much less of it remains",
+  "cloze": "Overfishing can ___ stocks without wiping them out entirely.",
+  "examples": [
+    "Drought has depleted the reservoirs across the region.",
+    "Late nights had depleted her energy by Friday."
+  ]
+}

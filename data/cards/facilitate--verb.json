@@ -1,0 +1,14 @@
+{
+  "id": "facilitate--verb",
+  "headword": "facilitate",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "to make a process easier or help it happen more smoothly",
+  "cloze": "Small classes ___ discussion between students.",
+  "examples": [
+    "Online tools facilitate group projects.",
+    "Clear signs facilitate movement through the airport."
+  ]
+}

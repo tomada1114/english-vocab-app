@@ -1,0 +1,14 @@
+{
+  "id": "discipline--noun",
+  "headword": "discipline",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "the practice of behaving in a controlled and orderly way",
+  "cloze": "The school is known for strict ___.",
+  "examples": [
+    "Discipline improved after the new head arrived.",
+    "The coach demanded discipline from every player."
+  ]
+}

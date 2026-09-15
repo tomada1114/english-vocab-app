@@ -1,0 +1,14 @@
+{
+  "id": "malnutrition--noun",
+  "headword": "malnutrition",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "poor health caused by not eating enough good food",
+  "cloze": "___ still affects millions of young children.",
+  "examples": [
+    "Malnutrition stunts growth in early childhood.",
+    "The camp treats malnutrition with special food."
+  ]
+}

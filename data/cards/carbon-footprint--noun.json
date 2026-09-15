@@ -1,0 +1,14 @@
+{
+  "id": "carbon-footprint--noun",
+  "headword": "carbon footprint",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the total greenhouse gas that one activity, product or person is responsible for",
+  "cloze": "Flying less is the fastest way to cut your ___.",
+  "examples": [
+    "The company published its carbon footprint.",
+    "Her carbon footprint fell after selling the car."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "biodiversity--noun",
+  "headword": "biodiversity",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "the range of different living things in one area",
+  "cloze": "Clearing the rainforest sharply reduces ___.",
+  "examples": [
+    "The reef has extraordinary biodiversity.",
+    "Farming with one crop harms biodiversity."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "holistic--adjective",
+  "headword": "holistic",
+  "pos": "adjective",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "looking at the whole of something, not single parts",
+  "cloze": "The school takes a ___ view of each child.",
+  "examples": [
+    "Holistic marking judges the essay overall.",
+    "Critics call the holistic approach vague."
+  ]
+}

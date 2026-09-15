@@ -1,0 +1,14 @@
+{
+  "id": "sustainable--adjective",
+  "headword": "sustainable",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "able to continue for a long time without using up what it needs",
+  "cloze": "Growth at this rate is not ___ beyond the next decade.",
+  "examples": [
+    "Sustainable tourism protects the reef and local jobs.",
+    "We need a sustainable source of fresh water."
+  ]
+}

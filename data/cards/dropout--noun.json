@@ -1,0 +1,14 @@
+{
+  "id": "dropout--noun",
+  "headword": "dropout",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "a student who leaves a course before finishing",
+  "cloze": "He became a ___ after failing two courses.",
+  "examples": [
+    "Most dropouts return to study later.",
+    "Dropouts often struggle to find steady work."
+  ]
+}

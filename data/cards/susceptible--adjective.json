@@ -1,0 +1,14 @@
+{
+  "id": "susceptible--adjective",
+  "headword": "susceptible",
+  "pos": "adjective",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "likely to be affected by a particular illness or influence",
+  "cloze": "People with asthma are especially ___ to air pollution.",
+  "examples": [
+    "Young trees are susceptible to frost damage.",
+    "Poor sleep leaves the body more susceptible."
+  ]
+}

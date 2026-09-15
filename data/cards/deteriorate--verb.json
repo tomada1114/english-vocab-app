@@ -1,0 +1,14 @@
+{
+  "id": "deteriorate--verb",
+  "headword": "deteriorate",
+  "pos": "verb",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "to lose quality or health steadily as time passes",
+  "cloze": "His condition began to ___ after surgery.",
+  "examples": [
+    "Eyesight deteriorates slowly with age.",
+    "Air quality deteriorated during the fires."
+  ]
+}

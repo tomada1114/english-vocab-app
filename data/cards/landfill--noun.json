@@ -1,0 +1,14 @@
+{
+  "id": "landfill--noun",
+  "headword": "landfill",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "a place where rubbish is buried under the ground",
+  "cloze": "Most plastic still ends up in ___.",
+  "examples": [
+    "The city opened a new landfill outside town.",
+    "Food waste in landfill produces methane."
+  ]
+}

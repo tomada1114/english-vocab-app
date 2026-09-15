@@ -1,0 +1,14 @@
+{
+  "id": "numeracy--noun",
+  "headword": "numeracy",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "the ability to work with figures and calculations",
+  "cloze": "Employers complain about weak ___ among graduates.",
+  "examples": [
+    "Numeracy is tested at age eleven.",
+    "The course builds basic numeracy skills."
+  ]
+}

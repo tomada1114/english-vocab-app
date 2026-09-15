@@ -1,0 +1,14 @@
+{
+  "id": "incentive--noun",
+  "headword": "incentive",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "something that encourages people to act",
+  "cloze": "Free laptops were offered as an ___ to attend.",
+  "examples": [
+    "Bonuses are a strong incentive for staff.",
+    "There is little incentive to study harder."
+  ]
+}

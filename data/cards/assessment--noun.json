@@ -1,0 +1,14 @@
+{
+  "id": "assessment--noun",
+  "headword": "assessment",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "a task or test used to measure what a learner has achieved",
+  "cloze": "Pupils sit a short ___ at the end of each unit.",
+  "examples": [
+    "The assessment counts for half the grade.",
+    "She dreaded the surprise assessment on Friday."
+  ]
+}

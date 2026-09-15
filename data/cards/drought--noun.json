@@ -1,0 +1,14 @@
+{
+  "id": "drought--noun",
+  "headword": "drought",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "a long period with too little rain",
+  "cloze": "The ___ lasted three years and ruined the harvest.",
+  "examples": [
+    "Farmers sold their cattle during the drought.",
+    "Cities limit water use in a drought."
+  ]
+}

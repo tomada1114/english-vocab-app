@@ -1,0 +1,14 @@
+{
+  "id": "infectious--adjective",
+  "headword": "infectious",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "caused by germs that can spread to other people",
+  "cloze": "Cholera is an ___ disease carried in dirty water.",
+  "examples": [
+    "The ward isolates infectious patients.",
+    "He stayed home while still infectious."
+  ]
+}

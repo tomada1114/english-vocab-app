@@ -1,0 +1,14 @@
+{
+  "id": "competence--noun",
+  "headword": "competence",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "the ability to do something to the standard a job requires",
+  "cloze": "The test measures ___ rather than memory.",
+  "examples": [
+    "Employers value competence over qualifications.",
+    "Her competence in statistics impressed the panel."
+  ]
+}

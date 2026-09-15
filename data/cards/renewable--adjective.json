@@ -1,0 +1,14 @@
+{
+  "id": "renewable--adjective",
+  "headword": "renewable",
+  "pos": "adjective",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["environment"],
+  "definition": "coming from a source that nature replaces by itself",
+  "cloze": "Half the country's power now comes from ___ sources.",
+  "examples": [
+    "Wind and solar are renewable, unlike coal.",
+    "The island runs on renewable energy alone."
+  ]
+}

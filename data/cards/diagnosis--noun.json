@@ -1,0 +1,14 @@
+{
+  "id": "diagnosis--noun",
+  "headword": "diagnosis",
+  "pos": "noun",
+  "level": "B2",
+  "purposes": ["ielts"],
+  "topics": ["health"],
+  "definition": "a doctor's judgement about what illness someone has",
+  "cloze": "The scan confirmed the ___ within hours.",
+  "examples": [
+    "An early diagnosis saved her life.",
+    "Her diagnosis explained years of tiredness."
+  ]
+}

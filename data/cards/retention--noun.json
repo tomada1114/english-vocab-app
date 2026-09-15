@@ -1,0 +1,14 @@
+{
+  "id": "retention--noun",
+  "headword": "retention",
+  "pos": "noun",
+  "level": "C1",
+  "purposes": ["ielts"],
+  "topics": ["education"],
+  "definition": "the share of students, staff or learning that is not lost",
+  "cloze": "Better teaching improved ___ in the first year.",
+  "examples": [
+    "Retention improved after the college added tutors.",
+    "The college reports poor student retention."
+  ]
+}
