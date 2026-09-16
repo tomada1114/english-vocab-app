@@ -1,6 +1,6 @@
 import "server-only";
 
-import { readdir, readFile } from "node:fs/promises";
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 
 import type { ZodType } from "zod";
@@ -15,6 +15,7 @@ import {
 } from "../core/cards/card";
 import { err, ok, type Result } from "../core/result";
 import { CardLoadError } from "./card-errors";
+import { readJson } from "./card-json";
 
 export { CardLoadError, type CardLoadErrorCode } from "./card-errors";
 
@@ -34,11 +35,14 @@ export interface VocabularyLists {
  * Every card in `directory`, plus one error per file that is not one.
  *
  * @remarks
- * Never throws and never abandons the run on a bad file: one unreadable card
- * must not hide the hundreds beside it, so the failures are data a caller
- * reports. Files are read in name order; anything not ending in `.json` is
- * ignored rather than reported, since `data/cards/` holds a `.gitkeep` while
- * it is empty.
+ * It never throws, and never abandons the run on a bad file: one unreadable
+ * card must not hide the hundreds beside it, so the failures are data a caller
+ * reports rather than an exception that ends the page. A directory that cannot
+ * be listed at all comes back as a single error against the directory itself.
+ * Files are read in name order, and anything not ending in `.json` is ignored
+ * rather than reported: `data/cards/` holds a `.gitkeep` while it is empty.
+ *
+ * @param directory - The directory holding one JSON file per card.
  */
 export async function loadCards(directory: string): Promise<LoadedCards> {
   const names = await readCardFileNames(directory);
@@ -63,9 +67,13 @@ export async function loadCards(directory: string): Promise<LoadedCards> {
  * The topic and purpose lists `dataDirectory` holds, validated.
  *
  * @remarks
- * This throws where {@link loadCards} collects: a malformed card is one file
- * of many, but a missing or malformed list leaves no vocabulary to build a
- * scope out of at all — a repository mistake with no caller-side recovery.
+ * This throws where {@link loadCards} collects, because the two failures are
+ * not the same kind of thing. A malformed card is one file of many and the app
+ * still has cards to show; a missing or malformed list leaves no vocabulary to
+ * build a scope out of at all — a repository mistake with no caller-side
+ * recovery, the reasoning `src/server/env.ts` reads the environment with.
+ *
+ * @param dataDirectory - The directory holding the two list files.
  * @throws A {@link CardLoadError} naming the list file that failed.
  */
 export async function loadLists(dataDirectory: string): Promise<VocabularyLists> {
@@ -168,24 +176,6 @@ async function loadCard(
     );
   }
   return ok(parsed.data);
-}
-
-/** `file` parsed as JSON, or which half of that failed. */
-async function readJson(file: string): Promise<Result<unknown, CardLoadError>> {
-  let text: string;
-  try {
-    text = await readFile(file, "utf8");
-  } catch (cause) {
-    const message = "The file could not be read.";
-    return err(new CardLoadError("ERR_CARD_UNREADABLE", file, message, { cause }));
-  }
-
-  try {
-    return ok(JSON.parse(text) as unknown);
-  } catch (cause) {
-    const message = "The file is not valid JSON.";
-    return err(new CardLoadError("ERR_CARD_INVALID_JSON", file, message, { cause }));
-  }
 }
 
 /** `value` as what `schema` describes, or a {@link CardLoadError} naming `file`. */
