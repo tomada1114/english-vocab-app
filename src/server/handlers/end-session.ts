@@ -3,10 +3,10 @@ import "server-only";
 import { rememberedNow } from "../../core/progress";
 import { scopeSchema } from "../../core/scope";
 import type { RequestHandler } from "../http";
-import { countSessionReviews } from "../summary";
 import {
   findSession,
   reviewsOf,
+  scopedCardIds,
   sessionFailure,
   type SessionDependencies,
 } from "./session-context";
@@ -49,10 +49,13 @@ export function createEndSessionHandler(
     }
 
     const nowMs = now();
+    const cards = await readCards();
     const rememberedAfter = rememberedNow(
       {
-        cards: await readCards(),
-        reviews: reviewsOf(store.listReviewLogs()),
+        cards,
+        reviews: reviewsOf(
+          store.listReviewLogsForCards(scopedCardIds(cards, scope.data)),
+        ),
         scope: scope.data,
       },
       nowMs,
@@ -60,7 +63,7 @@ export function createEndSessionHandler(
     store.endSession({ id: session.value.id, endedAt: nowMs, rememberedAfter });
 
     const answer: EndedSession = {
-      reviewed: countSessionReviews(store, session.value.id),
+      reviewed: store.countSessionReviews(session.value.id),
       rememberedBefore: session.value.rememberedBefore,
       rememberedAfter,
     };

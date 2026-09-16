@@ -6,10 +6,12 @@ import type { Card } from "../../core/cards/card";
 import type { Review } from "../../core/progress";
 import { err, ok, type Result } from "../../core/result";
 import type { SchedulerPhase, SchedulerState } from "../../core/scheduler";
-import { scopeSchema, type Scope } from "../../core/scope";
+import { inScope, scopeSchema, type Scope } from "../../core/scope";
 import type { Store } from "../db/queries";
 import type { CardState, ReviewLog, Session } from "../db/records";
-import { failure } from "../http";
+import { sessionFailure } from "./session-errors";
+
+export { sessionFailure, type SessionErrorCode } from "./session-errors";
 
 /**
  * Everything the three study-session handlers are wired with.
@@ -25,6 +27,14 @@ export interface SessionDependencies {
   readonly store: Store;
   /** Every card in the deck, in-scope or not; the caller filters. */
   readonly readCards: () => Promise<readonly Card[]>;
+  /**
+   * The card `cardId` names, or `undefined` when the deck does not hold it.
+   *
+   * @remarks
+   * Reads one file rather than the whole deck, which is what keeps rating a
+   * card that already has state off the full-deck read `readCards` is.
+   */
+  readonly readCard: (cardId: string) => Promise<Card | undefined>;
   /** Epoch milliseconds, as `Date.now` reports them. */
   readonly now: () => number;
 }
@@ -37,66 +47,6 @@ export const DEFAULT_NEW_CARDS_PER_DAY = 10;
 
 /** The stored `newCardsPerDay` setting: a count, never negative or fractional. */
 const newCardsPerDaySchema = z.int().nonnegative();
-
-/**
- * Every way a study-session request is refused by this layer.
- *
- * @remarks
- * The body-read vocabulary — `ERR_BAD_REQUEST` and `ERR_PAYLOAD_TOO_LARGE` —
- * belongs to `src/server/http.ts` and is answered there; these are the
- * failures that need the session and the deck to be decided at all.
- */
-export type SessionErrorCode =
-  /** The body is JSON, but not `{ cardId, rating }` with a rating of 1–4. */
-  | "ERR_SESSION_REQUEST_INVALID"
-  /** The path names no session this database has opened. */
-  | "ERR_SESSION_NOT_FOUND"
-  /** The rated card id is in no file under the card directory. */
-  | "ERR_SESSION_CARD_NOT_FOUND"
-  /** The session row's stored scope no longer matches the scope schema. */
-  | "ERR_SESSION_SCOPE_CORRUPT"
-  /** A stored card state names no scheduler phase. */
-  | "ERR_SESSION_CARD_STATE_CORRUPT";
-
-/**
- * The status each code is answered with.
- *
- * @remarks
- * `as const satisfies` rather than an annotation: a code added to the union
- * above fails to compile here until it has been given a status, instead of
- * falling through to a default nobody chose.
- */
-const SESSION_ERROR_STATUS = {
-  ERR_SESSION_REQUEST_INVALID: 400,
-  ERR_SESSION_NOT_FOUND: 404,
-  ERR_SESSION_CARD_NOT_FOUND: 400,
-  ERR_SESSION_SCOPE_CORRUPT: 500,
-  ERR_SESSION_CARD_STATE_CORRUPT: 500,
-} as const satisfies Record<SessionErrorCode, number>;
-
-/**
- * One fixed sentence per code.
- *
- * @remarks
- * Each names the shape of what was refused and never the content that was
- * sent: a card id or a rating quoted back here would be copied into every log
- * that records the answer. `designing-errors` holds the rule.
- */
-const SESSION_ERROR_MESSAGE = {
-  ERR_SESSION_REQUEST_INVALID:
-    "The request body must be an object with a card id and a rating of 1, 2, 3 or 4.",
-  ERR_SESSION_NOT_FOUND: "The path does not name a session that was ever opened.",
-  ERR_SESSION_CARD_NOT_FOUND: "The request names a card the deck does not hold.",
-  ERR_SESSION_SCOPE_CORRUPT:
-    "The scope stored against that session does not match the scope schema.",
-  ERR_SESSION_CARD_STATE_CORRUPT:
-    "A card's stored scheduling state does not name a phase the scheduler knows.",
-} as const satisfies Record<SessionErrorCode, string>;
-
-/** The answer one of these codes is sent as. */
-export function sessionFailure(code: SessionErrorCode): Response {
-  return failure(SESSION_ERROR_STATUS[code], code, SESSION_ERROR_MESSAGE[code]);
-}
 
 /**
  * The session id in `/api/sessions/<id>/reviews` and `/api/sessions/<id>/end`.
@@ -149,6 +99,11 @@ export function readNewCardsPerDay(store: Store): number {
   );
 }
 
+/** The ids of the cards `scope` selects, by the predicate every figure uses. */
+export function scopedCardIds(cards: readonly Card[], scope: Scope): string[] {
+  return cards.filter((card) => inScope(card, scope)).map((card) => card.id);
+}
+
 /** Maps stored state to the scheduler's closed union; out-of-range values are corrupt. */
 function toPhase(state: number): SchedulerPhase | null {
   return state === 0 || state === 1 || state === 2 || state === 3 ? state : null;
@@ -173,12 +128,12 @@ function toSchedulerState(row: CardState): SchedulerState | null {
   };
 }
 
-/** Every rated card's scheduler state, keyed by id; a card with no entry is new. */
-export function schedulerStates(
-  store: Store,
+/** Every row read as a scheduler state, keyed by card id; the corrupt-phase rule. */
+function statesFrom(
+  rows: readonly CardState[],
 ): Result<ReadonlyMap<string, SchedulerState>, Response> {
   const states = new Map<string, SchedulerState>();
-  for (const row of store.getCardStates()) {
+  for (const row of rows) {
     const state = toSchedulerState(row);
     if (state === null) {
       return err(sessionFailure("ERR_SESSION_CARD_STATE_CORRUPT"));
@@ -186,6 +141,36 @@ export function schedulerStates(
     states.set(row.cardId, state);
   }
   return ok(states);
+}
+
+/** Every rated card's scheduler state, keyed by id; a card with no entry is new. */
+export function schedulerStates(
+  store: Store,
+): Result<ReadonlyMap<string, SchedulerState>, Response> {
+  return statesFrom(store.getCardStates());
+}
+
+/** One card's scheduler state, `null` when it is new, or the refusal. */
+export function schedulerStateOf(
+  store: Store,
+  cardId: string,
+): Result<SchedulerState | null, Response> {
+  const row = store.getCardState(cardId);
+  if (row === undefined) {
+    return ok(null);
+  }
+  const state = toSchedulerState(row);
+  return state === null
+    ? err(sessionFailure("ERR_SESSION_CARD_STATE_CORRUPT"))
+    : ok(state);
+}
+
+/** The scheduler states of the named cards, keyed by id. */
+export function schedulerStatesFor(
+  store: Store,
+  cardIds: readonly string[],
+): Result<ReadonlyMap<string, SchedulerState>, Response> {
+  return statesFrom(store.getCardStatesFor(cardIds));
 }
 
 /** The whole `review_log`, as the narrower view every progress figure reads. */

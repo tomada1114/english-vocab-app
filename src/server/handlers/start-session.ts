@@ -10,7 +10,7 @@ import {
   readNewCardsPerDay,
   readScope,
   reviewsOf,
-  schedulerStates,
+  schedulerStatesFor,
   type SessionDependencies,
 } from "./session-context";
 
@@ -57,6 +57,11 @@ function toQueuedCard(card: Card): QueuedCard {
  * is computed over every card: `rememberedNow` applies the scope itself, and
  * handing it a pre-filtered list would only hide that from a reader.
  *
+ * The queue's scheduler states and `rememberedBefore`'s review history are
+ * both read for the in-scope cards only, one point-scope query each, over the
+ * same scoped card array — built once, so it and the ids handed to those two
+ * reads cannot drift apart.
+ *
  * It takes no request body. A session carries no options — the scope is a
  * setting, not a parameter — so there is nothing for a caller to send and
  * nothing to validate.
@@ -72,13 +77,15 @@ export function createStartSessionHandler(
     const cards = await readCards();
     const nowMs = now();
     const day = dayBounds(nowMs);
-    const states = schedulerStates(store);
+    const scopedCards = cards.filter((card) => inScope(card, scope));
+    const ids = scopedCards.map((card) => card.id);
+    const states = schedulerStatesFor(store, ids);
     if (!states.ok) {
       return states.error;
     }
 
     const queue = buildQueue({
-      cards: cards.filter((card) => inScope(card, scope)),
+      cards: scopedCards,
       states: states.value,
       nowMs,
       dayEndMs: day.end,
@@ -87,7 +94,7 @@ export function createStartSessionHandler(
     });
 
     const rememberedBefore = rememberedNow(
-      { cards, reviews: reviewsOf(store.listReviewLogs()), scope },
+      { cards, reviews: reviewsOf(store.listReviewLogsForCards(ids)), scope },
       nowMs,
     );
     const sessionId = store.createSession({
