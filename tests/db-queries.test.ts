@@ -147,6 +147,76 @@ describe("getCardStates", () => {
   });
 });
 
+describe("getCardState", () => {
+  it("returns undefined for an empty database", () => {
+    expect(newStore().getCardState("mitigate--verb")).toBeUndefined();
+  });
+
+  it("returns undefined for a card with no row, beside one that has one", () => {
+    const store = newStoreWithSession();
+    store.recordReview(reviewRecord());
+
+    expect(store.getCardState("well-being--noun")).toBeUndefined();
+  });
+
+  it("returns the same record getCardStates lists for that card", () => {
+    const store = newStoreWithSession();
+    store.recordReview(reviewRecord());
+
+    expect(store.getCardState("mitigate--verb")).toStrictEqual(
+      store.getCardStates()[0],
+    );
+  });
+});
+
+describe("getCardStatesFor", () => {
+  function storeWithThreeCards(): Store {
+    const store = newStoreWithSession();
+    for (const cardId of [
+      "well-being--noun",
+      "mitigate--verb",
+      "carbon-footprint--noun",
+    ]) {
+      store.recordReview(reviewRecord({ cardId }));
+    }
+    return store;
+  }
+
+  it("returns [] for an empty id list, without touching SQL", () => {
+    expect(storeWithThreeCards().getCardStatesFor([])).toStrictEqual([]);
+  });
+
+  it("returns only the named cards, in card_id order", () => {
+    const states = storeWithThreeCards().getCardStatesFor([
+      "well-being--noun",
+      "mitigate--verb",
+    ]);
+
+    expect(states.map((state) => state.cardId)).toStrictEqual([
+      "mitigate--verb",
+      "well-being--noun",
+    ]);
+  });
+
+  it("skips an id nothing rated", () => {
+    const states = storeWithThreeCards().getCardStatesFor([
+      "mitigate--verb",
+      "no-such-card--noun",
+    ]);
+
+    expect(states.map((state) => state.cardId)).toStrictEqual(["mitigate--verb"]);
+  });
+
+  it("returns one row for an id repeated in the list", () => {
+    const states = storeWithThreeCards().getCardStatesFor([
+      "mitigate--verb",
+      "mitigate--verb",
+    ]);
+
+    expect(states).toHaveLength(1);
+  });
+});
+
 describe("recordReview", () => {
   it("writes the log row with both sides of the rating", () => {
     const store = newStoreWithSession();
@@ -278,6 +348,130 @@ describe("listReviewLogs", () => {
       REVIEWED_AT + 1,
       REVIEWED_AT + 2,
     ]);
+  });
+});
+
+describe("listReviewLogsForCards", () => {
+  it("returns [] for an empty id list, without touching SQL", () => {
+    expect(newStoreWithSession().listReviewLogsForCards([])).toStrictEqual([]);
+  });
+
+  it("returns every rating of the named cards, oldest first", () => {
+    const store = newStoreWithSession();
+    store.recordReview(
+      reviewRecord({ cardId: "mitigate--verb", reviewedAt: REVIEWED_AT + 2 }),
+    );
+    store.recordReview(
+      reviewRecord({ cardId: "well-being--noun", reviewedAt: REVIEWED_AT }),
+    );
+    store.recordReview(
+      reviewRecord({ cardId: "carbon-footprint--noun", reviewedAt: REVIEWED_AT + 1 }),
+    );
+
+    const logs = store.listReviewLogsForCards(["mitigate--verb", "well-being--noun"]);
+
+    expect(logs.map((log) => log.cardId)).toStrictEqual([
+      "well-being--noun",
+      "mitigate--verb",
+    ]);
+  });
+
+  it("orders two logs sharing a reviewed_at by id, as listReviewLogs does", () => {
+    const store = newStoreWithSession();
+    store.recordReview(reviewRecord({ cardId: "well-being--noun" }));
+    store.recordReview(reviewRecord({ cardId: "carbon-footprint--noun" }));
+
+    const logs = store.listReviewLogsForCards([
+      "carbon-footprint--noun",
+      "well-being--noun",
+    ]);
+
+    expect(logs.map((log) => log.cardId)).toStrictEqual([
+      "well-being--noun",
+      "carbon-footprint--noun",
+    ]);
+    expect(logs.map((log) => log.id)).toStrictEqual([1, 2]);
+  });
+
+  it("excludes the logs of cards not named", () => {
+    const store = newStoreWithSession();
+    store.recordReview(reviewRecord({ cardId: "mitigate--verb" }));
+    store.recordReview(reviewRecord({ cardId: "well-being--noun" }));
+
+    expect(
+      store.listReviewLogsForCards(["mitigate--verb"]).map((log) => log.cardId),
+    ).toStrictEqual(["mitigate--verb"]);
+  });
+
+  it("returns one copy per row for an id repeated in the list", () => {
+    const store = newStoreWithSession();
+    store.recordReview(reviewRecord());
+
+    expect(
+      store.listReviewLogsForCards(["mitigate--verb", "mitigate--verb"]),
+    ).toHaveLength(1);
+  });
+
+  it("returns only the matching rows over a 2,000-id list, arity being no ceiling", () => {
+    const store = newStoreWithSession();
+    store.recordReview(reviewRecord());
+    const ids = Array.from(
+      { length: 2000 },
+      (_unused, index) => `absent-${String(index)}--noun`,
+    );
+    ids.push("mitigate--verb");
+
+    expect(store.listReviewLogsForCards(ids).map((log) => log.cardId)).toStrictEqual([
+      "mitigate--verb",
+    ]);
+  });
+});
+
+describe("countSessionReviews", () => {
+  function openSession(store: Store): number {
+    return store.createSession({
+      startedAt: REVIEWED_AT,
+      scope: { purpose: "ielts", topics: [], target: null },
+      newLimit: 10,
+      rememberedBefore: 0,
+    });
+  }
+
+  it("counts nothing for a session nobody rated a card in", () => {
+    const store = newStore();
+
+    expect(store.countSessionReviews(openSession(store))).toBe(0);
+  });
+
+  it("counts nothing for a session id nothing opened", () => {
+    expect(newStore().countSessionReviews(404)).toBe(0);
+  });
+
+  it("counts every rating of the session, and none of another's", () => {
+    const store = newStore();
+    const first = openSession(store);
+    const second = openSession(store);
+    store.recordReview(reviewRecord({ sessionId: first, cardId: "mitigate--verb" }));
+    store.recordReview(reviewRecord({ sessionId: first, cardId: "well-being--noun" }));
+    store.recordReview(
+      reviewRecord({ sessionId: second, cardId: "carbon-footprint--noun" }),
+    );
+
+    expect([
+      store.countSessionReviews(first),
+      store.countSessionReviews(second),
+    ]).toStrictEqual([2, 1]);
+  });
+
+  it("counts a card rated twice in one session twice", () => {
+    const store = newStore();
+    const id = openSession(store);
+    store.recordReview(reviewRecord({ sessionId: id }));
+    store.recordReview(
+      reviewRecord({ sessionId: id, reviewedAt: REVIEWED_AT + 600_000 }),
+    );
+
+    expect(store.countSessionReviews(id)).toBe(2);
   });
 });
 

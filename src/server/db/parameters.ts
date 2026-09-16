@@ -97,3 +97,10 @@ export function sessionParameters(session: NewSession): Record<string, SQLInputV
     remembered_before: session.rememberedBefore,
   };
 }
+
+/** A card-id list as the single JSON parameter a `json_each` query binds. */
+export function cardIdsParameter(
+  cardIds: readonly string[],
+): Record<string, SQLInputValue> {
+  return { ids: toJson([...cardIds], "a card id list") };
+}

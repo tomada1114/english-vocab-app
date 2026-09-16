@@ -9,44 +9,14 @@ import {
   cardSchema,
   purposesSchema,
   topicsSchema,
+  POS_VALUES,
   type Card,
   type Purpose,
 } from "../core/cards/card";
 import { err, ok, type Result } from "../core/result";
+import { CardLoadError } from "./card-errors";
 
-/**
- * Why one file under `data/` could not be read as what it declares.
- *
- * @remarks
- * Four structurally different failures, so a caller can tell a malformed file
- * from a misfiled one. Every other card rule — an id that does not match its
- * key, an unknown topic, the text itself — is the Lint's vocabulary instead.
- */
-export type CardLoadErrorCode =
-  | "ERR_CARD_UNREADABLE"
-  | "ERR_CARD_INVALID_JSON"
-  | "ERR_CARD_SCHEMA"
-  | "ERR_CARD_ID_MISMATCH";
-
-/** One file under `data/` that could not be loaded, and why. */
-export class CardLoadError extends Error {
-  /** A literal union, not `string`: this is what a caller narrows on. */
-  readonly code: CardLoadErrorCode;
-  /** The path that failed — never the content that was at it. */
-  readonly file: string;
-
-  constructor(
-    code: CardLoadErrorCode,
-    file: string,
-    message: string,
-    options?: ErrorOptions,
-  ) {
-    super(message, options);
-    this.name = "CardLoadError";
-    this.code = code;
-    this.file = file;
-  }
-}
+export { CardLoadError, type CardLoadErrorCode } from "./card-errors";
 
 /** Every card a directory yielded, beside every file that yielded none. */
 export interface LoadedCards {
@@ -64,14 +34,11 @@ export interface VocabularyLists {
  * Every card in `directory`, plus one error per file that is not one.
  *
  * @remarks
- * It never throws, and never abandons the run on a bad file: one unreadable
- * card must not hide the hundreds beside it, so the failures are data a caller
- * reports rather than an exception that ends the page. A directory that cannot
- * be listed at all comes back as a single error against the directory itself.
- * Files are read in name order, and anything not ending in `.json` is ignored
- * rather than reported: `data/cards/` holds a `.gitkeep` while it is empty.
- *
- * @param directory - The directory holding one JSON file per card.
+ * Never throws and never abandons the run on a bad file: one unreadable card
+ * must not hide the hundreds beside it, so the failures are data a caller
+ * reports. Files are read in name order; anything not ending in `.json` is
+ * ignored rather than reported, since `data/cards/` holds a `.gitkeep` while
+ * it is empty.
  */
 export async function loadCards(directory: string): Promise<LoadedCards> {
   const names = await readCardFileNames(directory);
@@ -96,13 +63,9 @@ export async function loadCards(directory: string): Promise<LoadedCards> {
  * The topic and purpose lists `dataDirectory` holds, validated.
  *
  * @remarks
- * This throws where {@link loadCards} collects, because the two failures are
- * not the same kind of thing. A malformed card is one file of many and the app
- * still has cards to show; a missing or malformed list leaves no vocabulary to
- * build a scope out of at all — a repository mistake with no caller-side
- * recovery, the reasoning `src/server/env.ts` reads the environment with.
- *
- * @param dataDirectory - The directory holding the two list files.
+ * This throws where {@link loadCards} collects: a malformed card is one file
+ * of many, but a missing or malformed list leaves no vocabulary to build a
+ * scope out of at all — a repository mistake with no caller-side recovery.
  * @throws A {@link CardLoadError} naming the list file that failed.
  */
 export async function loadLists(dataDirectory: string): Promise<VocabularyLists> {
@@ -122,6 +85,42 @@ export async function loadLists(dataDirectory: string): Promise<VocabularyLists>
     topics: parseOrThrow(topicsSchema, topics.value, topicsFile),
     purposes: parseOrThrow(purposesSchema, purposes.value, purposesFile),
   };
+}
+
+// The shape `cardId(headword, pos)` produces, built from `POS_VALUES` so an
+// added part of speech stays in step; already enforced on every committed
+// file by the card Lint's `E_ID_MISMATCH`, so it excludes no real card.
+const CARD_ID_PATTERN = new RegExp(
+  `^[a-z0-9]+(?:-[a-z0-9]+)*--(?:${POS_VALUES.join("|")})$`,
+  "u",
+);
+
+/**
+ * The card `cardId` names, or `undefined` when the deck does not hold it.
+ *
+ * @remarks
+ * Reads exactly one file. Every failure — a malformed id, an unreadable or
+ * missing file, invalid JSON, a schema failure, a misfiled id — answers
+ * `undefined`, same as `loadCards` dropping that file; reasons are not
+ * returned because the one caller must not leak a path into its fixed
+ * refusal. Two independent guards run first: `cardId` must match
+ * {@link CARD_ID_PATTERN} (rejecting `.`, `/`, `\`, NUL, uppercase, empty),
+ * and the resolved parent of the target file must equal `directory`.
+ */
+export async function loadCardById(
+  directory: string,
+  cardId: string,
+): Promise<Card | undefined> {
+  if (!CARD_ID_PATTERN.test(cardId)) {
+    return undefined;
+  }
+  const name = `${cardId}.json`;
+  const file = path.join(directory, name);
+  if (path.dirname(path.resolve(file)) !== path.resolve(directory)) {
+    return undefined;
+  }
+  const loaded = await loadCard(directory, name);
+  return loaded.ok ? loaded.value : undefined;
 }
 
 /** The `.json` entries of `directory` in name order, or why it was not listed. */
