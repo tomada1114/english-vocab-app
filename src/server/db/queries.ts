@@ -15,6 +15,7 @@ import type {
   SettingsRecord,
 } from "./records";
 import {
+  cardIdsParameter,
   cardStateParameters,
   reviewLogParameters,
   sessionParameters,
@@ -28,6 +29,7 @@ import {
   toSettingJson,
   toTally,
 } from "./rows";
+import { prepareStatements } from "./statements";
 import { withTransaction } from "./transaction";
 
 /**
@@ -39,6 +41,17 @@ import { withTransaction } from "./transaction";
 export interface Store {
   /** Every card that has been rated at least once, in card-id order. */
   getCardStates(): CardState[];
+  /** One card's scheduling state, or `undefined` for a card never rated. */
+  getCardState(cardId: string): CardState | undefined;
+  /**
+   * The state of each named card that has one, in card-id order.
+   *
+   * @remarks
+   * One statement, whatever the length of the list. A repeated id yields one
+   * row, an unknown id yields none, and an empty list yields `[]` without a
+   * round trip.
+   */
+  getCardStatesFor(cardIds: readonly string[]): CardState[];
   /**
    * Records one rating: the card's new state and the log row, or neither.
    *
@@ -53,6 +66,14 @@ export interface Store {
   getSession(id: number): Session | undefined;
   /** Every rating ever given, oldest first. The table is append-only. */
   listReviewLogs(): ReviewLog[];
+  /**
+   * Every rating of the named cards, oldest first — `listReviewLogs`'s order,
+   * over a subset of its rows. Empty list, repeated id and unknown id behave
+   * as {@link getCardStatesFor}'s.
+   */
+  listReviewLogsForCards(cardIds: readonly string[]): ReviewLog[];
+  /** How many ratings were recorded against one session. */
+  countSessionReviews(sessionId: number): number;
   /**
    * How many distinct cards were rated for the first time at or after `since`.
    *
@@ -86,69 +107,37 @@ export interface Store {
  * @param database - A connection `openDatabase` has already migrated.
  */
 export function createStore(database: DatabaseSync): Store {
-  const selectCardStates = database.prepare(
-    "SELECT * FROM card_state ORDER BY card_id",
-  );
-  const upsertCardState = database.prepare(`
-    INSERT INTO card_state (card_id, due, stability, difficulty, scheduled_days,
-                            learning_steps, reps, lapses, state, last_review)
-    VALUES (:card_id, :due, :stability, :difficulty, :scheduled_days,
-            :learning_steps, :reps, :lapses, :state, :last_review)
-    ON CONFLICT (card_id) DO UPDATE SET
-      due = excluded.due, stability = excluded.stability,
-      difficulty = excluded.difficulty, scheduled_days = excluded.scheduled_days,
-      learning_steps = excluded.learning_steps, reps = excluded.reps,
-      lapses = excluded.lapses, state = excluded.state,
-      last_review = excluded.last_review
-  `);
-  const insertReviewLog = database.prepare(`
-    INSERT INTO review_log (card_id, session_id, rating, reviewed_at,
-                            state_before, due_before, stability_before,
-                            difficulty_before, state_after, due_after,
-                            stability_after, difficulty_after)
-    VALUES (:card_id, :session_id, :rating, :reviewed_at,
-            :state_before, :due_before, :stability_before,
-            :difficulty_before, :state_after, :due_after,
-            :stability_after, :difficulty_after)
-  `);
-  const selectReviewLogs = database.prepare(
-    "SELECT * FROM review_log ORDER BY reviewed_at, id",
-  );
-  const countFirstReviews = database.prepare(`
-    SELECT count(*) AS tally FROM (
-      SELECT min(reviewed_at) AS first_reviewed_at FROM review_log GROUP BY card_id
-    ) WHERE first_reviewed_at >= :since
-  `);
-  const insertSession = database.prepare(`
-    INSERT INTO session (started_at, scope, new_limit, remembered_before)
-    VALUES (:started_at, :scope, :new_limit, :remembered_before)
-  `);
-  const updateSessionEnd = database.prepare(`
-    UPDATE session SET ended_at = :ended_at, remembered_after = :remembered_after
-    WHERE id = :id
-  `);
-  const selectSession = database.prepare("SELECT * FROM session WHERE id = :id");
-  const selectSetting = database.prepare("SELECT value FROM setting WHERE key = :key");
-  const upsertSetting = database.prepare(`
-    INSERT INTO setting (key, value) VALUES (:key, :value)
-    ON CONFLICT (key) DO UPDATE SET value = excluded.value
-  `);
+  const statements = prepareStatements(database);
 
   return {
-    getCardStates: () => selectCardStates.all().map(toCardState),
+    getCardStates: () => statements.selectCardStates.all().map(toCardState),
+
+    getCardState: (cardId) => {
+      const row = statements.selectCardState.get({ card_id: cardId });
+      return row === undefined ? undefined : toCardState(row);
+    },
+
+    getCardStatesFor: (cardIds) =>
+      cardIds.length === 0
+        ? []
+        : statements.selectCardStatesFor
+            .all(cardIdsParameter(cardIds))
+            .map(toCardState),
 
     recordReview: (review) => {
       withTransaction(database, () => {
-        upsertCardState.run(cardStateParameters(review.cardId, review.after));
-        insertReviewLog.run(reviewLogParameters(review));
+        statements.upsertCardState.run(
+          cardStateParameters(review.cardId, review.after),
+        );
+        statements.insertReviewLog.run(reviewLogParameters(review));
       });
     },
 
     createSession: (session) =>
-      Number(insertSession.run(sessionParameters(session)).lastInsertRowid),
+      Number(statements.insertSession.run(sessionParameters(session)).lastInsertRowid),
 
     endSession: (end) => {
-      updateSessionEnd.run({
+      statements.updateSessionEnd.run({
         id: end.id,
         ended_at: end.endedAt,
         remembered_after: end.rememberedAfter,
@@ -156,16 +145,27 @@ export function createStore(database: DatabaseSync): Store {
     },
 
     getSession: (id) => {
-      const row = selectSession.get({ id });
+      const row = statements.selectSession.get({ id });
       return row === undefined ? undefined : toSession(row);
     },
 
-    listReviewLogs: () => selectReviewLogs.all().map(toReviewLog),
+    listReviewLogs: () => statements.selectReviewLogs.all().map(toReviewLog),
 
-    countFirstReviewsSince: (since) => toTally(countFirstReviews.get({ since })),
+    listReviewLogsForCards: (cardIds) =>
+      cardIds.length === 0
+        ? []
+        : statements.selectReviewLogsForCards
+            .all(cardIdsParameter(cardIds))
+            .map(toReviewLog),
+
+    countSessionReviews: (sessionId) =>
+      toTally(statements.countSessionReviews.get({ session_id: sessionId })),
+
+    countFirstReviewsSince: (since) =>
+      toTally(statements.countFirstReviews.get({ since })),
 
     getSetting: <T>(key: string, schema: ZodType<T>): T | undefined => {
-      const row = selectSetting.get({ key });
+      const row = statements.selectSetting.get({ key });
       if (row === undefined) {
         return undefined;
       }
@@ -182,15 +182,15 @@ export function createStore(database: DatabaseSync): Store {
     },
 
     setSetting: (key, value) => {
-      upsertSetting.run({ key, value: toJson(value, `setting "${key}"`) });
+      statements.upsertSetting.run({ key, value: toJson(value, `setting "${key}"`) });
     },
     replaceSettings: (settings) => {
       withTransaction(database, () => {
-        upsertSetting.run({
+        statements.upsertSetting.run({
           key: "scope",
           value: toJson(settings.scope, 'setting "scope"'),
         });
-        upsertSetting.run({
+        statements.upsertSetting.run({
           key: "newCardsPerDay",
           value: toJson(settings.newCardsPerDay, 'setting "newCardsPerDay"'),
         });

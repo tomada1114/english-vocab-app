@@ -92,8 +92,15 @@ function openStore(): { database: DatabaseSync; store: Store } {
 function dependenciesOver(
   store: Store,
   deck: readonly Card[] = DECK,
+  overrides: Partial<SessionDependencies> = {},
 ): SessionDependencies {
-  return { store, readCards: () => Promise.resolve(deck), now: () => NOW };
+  return {
+    store,
+    readCards: () => Promise.resolve(deck),
+    readCard: (cardId) => Promise.resolve(deck.find((card) => card.id === cardId)),
+    now: () => NOW,
+    ...overrides,
+  };
 }
 
 /** A rating already in the database, leaving the card due at `dueMs`. */
@@ -269,6 +276,46 @@ describe("POST /api/sessions", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("application/json");
   });
+
+  it("leaves an out-of-scope card's history out of the queue and rememberedBefore", async () => {
+    const { store } = openStore();
+    store.setSetting("scope", {
+      purpose: "ielts",
+      topics: ["education"],
+      target: null,
+    });
+    // MITIGATE is out of scope here (topics: ["environment"]); its history
+    // must not reach the queue or rememberedBefore, matching the whole-table
+    // reads this replaces.
+    alreadyRated(store, MITIGATE.id, NOW - DAY_MS);
+
+    const body = await bodyOf(await start(store));
+
+    expect(body["queue"]).toStrictEqual([
+      {
+        cardId: "curriculum--noun",
+        definition: "the subjects a school teaches",
+        cloze: "Music was dropped from the school ___ last year.",
+        headword: "curriculum",
+        examples: [
+          "The curriculum was rewritten for the new exam.",
+          "She teaches a subject that is not on the curriculum.",
+        ],
+      },
+    ]);
+    expect(store.getSession(2)?.rememberedBefore).toBe(0);
+  });
+
+  it("opens an empty session over a scope matching no card", async () => {
+    const { store } = openStore();
+    store.setSetting("scope", { purpose: "ielts", topics: ["food"], target: null });
+
+    const body = await bodyOf(await start(store));
+
+    expect(body["queue"]).toStrictEqual([]);
+    expect(body["sessionId"]).toBe(1);
+    expect(store.getSession(1)?.rememberedBefore).toBe(0);
+  });
 });
 
 describe("POST /api/sessions/[id]/reviews", () => {
@@ -419,21 +466,59 @@ describe("POST /api/sessions/[id]/reviews", () => {
     },
   );
 
-  it("refuses a rating when another stored card state is corrupt", async () => {
+  // The behaviour change this issue introduces: record-review now reads only
+  // the rated card's own state, so a corrupt row belonging to another card no
+  // longer blocks it — where the old whole-table read used to fail every
+  // rating on any corrupt row, anywhere in the table.
+  it("rates a card successfully when a different card's stored state is corrupt", async () => {
     const { database, store } = openStoreWithSession();
     alreadyRated(store, MITIGATE.id, NOW - DAY_MS);
     alreadyRated(store, CURRICULUM.id, NOW - DAY_MS);
     corruptState(database, CURRICULUM.id, 7);
-    const logsBefore = store.listReviewLogs();
 
-    await expectCardStateCorrupt(
-      await review(store, 1, { cardId: MITIGATE.id, rating: 3 }),
-    );
+    const response = await review(store, 1, { cardId: MITIGATE.id, rating: 3 });
 
-    expect(store.listReviewLogs()).toStrictEqual(logsBefore);
+    expect(response.status).toBe(200);
+    expect(store.listReviewLogs()).toHaveLength(3);
     expect(
       store.getCardStates().find((state) => state.cardId === CURRICULUM.id),
     ).toMatchObject({ state: 7 });
+  });
+
+  it("accepts the first rating of a never-rated card without reading the whole deck", async () => {
+    const store = storeWithSession();
+    const handler = createRecordReviewHandler(
+      dependenciesOver(store, DECK, {
+        readCards: () => {
+          throw new Error("readCards must not be called on the review hot path");
+        },
+      }),
+    );
+
+    const response = await handler(
+      postTo("http://localhost/api/sessions/1/reviews", {
+        cardId: MITIGATE.id,
+        rating: 3,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(store.listReviewLogs()).toHaveLength(1);
+  });
+
+  it("keeps the requeue/due answer and the stored rows unchanged for a card that already had state", async () => {
+    const { store } = openStoreWithSession();
+    alreadyRated(store, MITIGATE.id, NOW - DAY_MS);
+
+    const body = await bodyOf(
+      await review(store, 1, { cardId: MITIGATE.id, rating: 3 }),
+    );
+
+    expect(body["requeue"]).toBe(false);
+    const states = store.getCardStates();
+    expect(states).toHaveLength(1);
+    expect(states[0]).toMatchObject({ cardId: MITIGATE.id, reps: 2, lapses: 0 });
+    expect(store.listReviewLogs()).toHaveLength(2);
   });
 
   it("writes nothing when the rating is refused", async () => {
@@ -559,6 +644,59 @@ describe("POST /api/sessions/[id]/end", () => {
       code: "ERR_SESSION_SCOPE_CORRUPT",
     });
     expect(store.getSession(1)?.endedAt).toBeNull();
+  });
+
+  it("measures rememberedAfter over the session's saved scope, not the current setting", async () => {
+    const { store } = openStore();
+    store.setSetting("scope", {
+      purpose: "ielts",
+      topics: ["environment"],
+      target: null,
+    });
+    await sessionWithOneRating(store); // scope saved on the session: environment-only.
+    alreadyRated(store, CURRICULUM.id, NOW - DAY_MS); // in-scope only if read afresh.
+    // Narrow the *current* setting after the session opened; rememberedAfter
+    // must still use the scope the session itself was opened with.
+    store.setSetting("scope", {
+      purpose: "ielts",
+      topics: ["education"],
+      target: null,
+    });
+
+    const body = await bodyOf(await end(store, 1));
+
+    // CURRICULUM (education) is out of the session's saved (environment) scope,
+    // so only MITIGATE's rating counts toward rememberedAfter.
+    expect(body["rememberedAfter"]).toBeCloseTo(1, 10);
+  });
+
+  it("counts only its own session's ratings, with another session's present", async () => {
+    const { store } = openStore();
+    await sessionWithOneRating(store);
+    const secondStart = createStartSessionHandler(dependenciesOver(store));
+    await secondStart(postTo("http://localhost/api/sessions"));
+    const secondReview = createRecordReviewHandler(dependenciesOver(store));
+    await secondReview(
+      postTo("http://localhost/api/sessions/2/reviews", {
+        cardId: CURRICULUM.id,
+        rating: 3,
+      }),
+    );
+
+    const body = await bodyOf(await end(store, 1));
+
+    expect(body["reviewed"]).toBe(1);
+  });
+
+  it("still answers when the session was already ended", async () => {
+    const { store } = openStore();
+    await sessionWithOneRating(store);
+    await end(store, 1);
+
+    const response = await end(store, 1);
+
+    expect(response.status).toBe(200);
+    expect((await bodyOf(response))["reviewed"]).toBe(1);
   });
 });
 

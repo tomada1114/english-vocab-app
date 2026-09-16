@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { openDatabase } from "../src/server/db/connection";
 import { createStore, type Store } from "../src/server/db/queries";
-import { countSessionReviews, createSessionSummaryReader } from "../src/server/summary";
+import { createSessionSummaryReader } from "../src/server/summary";
 import type { ReviewSnapshot } from "../src/server/db/records";
 import type { Card } from "../src/core/cards/card";
 
@@ -49,10 +49,16 @@ function newStore(): Store {
   return createStore(database);
 }
 
-function openSession(store: Store, rememberedBefore: number): number {
+const ALL_TOPICS_SCOPE = { purpose: "ielts", topics: [], target: null };
+
+function openSession(
+  store: Store,
+  rememberedBefore: number,
+  scope: unknown = ALL_TOPICS_SCOPE,
+): number {
   return store.createSession({
     startedAt: NOW,
-    scope: { purpose: "ielts", topics: [], target: null },
+    scope,
     newLimit: 10,
     rememberedBefore,
   });
@@ -92,37 +98,6 @@ function readSummary(store: Store): ReturnType<typeof createSessionSummaryReader
   });
 }
 
-describe("countSessionReviews", () => {
-  it("counts nothing for a session nobody rated a card in", () => {
-    const store = newStore();
-
-    expect(countSessionReviews(store, openSession(store, 0))).toBe(0);
-  });
-
-  it("counts every rating of the session, and none of another's", () => {
-    const store = newStore();
-    const first = openSession(store, 0);
-    const second = openSession(store, 0);
-    rate(store, first, "mitigate--verb");
-    rate(store, first, "curriculum--noun");
-    rate(store, second, "carbon-footprint--noun");
-
-    expect([
-      countSessionReviews(store, first),
-      countSessionReviews(store, second),
-    ]).toStrictEqual([2, 1]);
-  });
-
-  it("counts a card rated twice in one session twice", () => {
-    const store = newStore();
-    const id = openSession(store, 0);
-    rate(store, id, "mitigate--verb");
-    rate(store, id, "mitigate--verb");
-
-    expect(countSessionReviews(store, id)).toBe(2);
-  });
-});
-
 describe("the session summary reader", () => {
   it("reports nothing for an id no session was ever opened under", () => {
     return expect(readSummary(newStore())(404)).resolves.toBeUndefined();
@@ -154,6 +129,21 @@ describe("the session summary reader", () => {
     });
   });
 
+  // `reviewed` is read through `store.countSessionReviews` (see
+  // `tests/db-queries.test.ts` for that method's own suite); this proves the
+  // summary reader wires it to the right session id rather than the whole log.
+  it("counts only the named session's ratings, with another session's present", async () => {
+    const store = newStore();
+    const first = openSession(store, 0);
+    const second = openSession(store, 0);
+    rate(store, first, "mitigate--verb");
+    rate(store, first, "curriculum--noun");
+    rate(store, second, "carbon-footprint--noun");
+
+    await expect(readSummary(store)(first)).resolves.toMatchObject({ reviewed: 2 });
+    await expect(readSummary(store)(second)).resolves.toMatchObject({ reviewed: 1 });
+  });
+
   it("builds the curve from all history in the session's stored scope", async () => {
     const store = newStore();
     const earlier = openSession(store, 0);
@@ -164,5 +154,29 @@ describe("the session summary reader", () => {
     await expect(readSummary(store)(current)).resolves.toMatchObject({
       dailyCurve: [{ atMs: NOW, remembered: 2 }],
     });
+  });
+
+  it("keeps the curve unchanged when an out-of-scope card has history", async () => {
+    const store = newStore();
+    const outOfScopeCard: Card = {
+      ...OTHER_CARD,
+      id: "resilience--noun",
+      topics: ["work"],
+    };
+    const scope = { purpose: "ielts", topics: ["environment"], target: null };
+    const id = openSession(store, 0, scope);
+    rate(store, id, CARD.id);
+    rate(store, id, outOfScopeCard.id);
+
+    const summary = await createSessionSummaryReader({
+      store,
+      readCards: () => Promise.resolve([CARD, outOfScopeCard]),
+      now: () => NOW,
+    })(id);
+
+    // CARD is topics: ["environment"], in the session's saved scope;
+    // outOfScopeCard (topics: ["work"]) is not, so its rating must not move
+    // the curve — the same figure as if it had never been rated.
+    expect(summary).toMatchObject({ dailyCurve: [{ atMs: NOW, remembered: 1 }] });
   });
 });

@@ -4,7 +4,7 @@ import type { Card } from "../core/cards/card";
 import { dailyCurve, type CurvePoint } from "../core/progress";
 import { scopeSchema } from "../core/scope";
 import type { Store } from "./db/queries";
-import { reviewsOf } from "./handlers/session-context";
+import { reviewsOf, scopedCardIds } from "./handlers/session-context";
 
 /**
  * What one finished session reads as.
@@ -33,18 +33,6 @@ export interface SessionSummaryDependencies {
 }
 
 /**
- * How many ratings `sessionId` collected.
- *
- * @remarks
- * Counted from the whole append-only log. The storage optimization for this
- * read belongs to issue #27; this function keeps the summary's current public
- * behavior until that Store surface is migrated.
- */
-export function countSessionReviews(store: Store, sessionId: number): number {
-  return store.listReviewLogs().filter((log) => log.sessionId === sessionId).length;
-}
-
-/**
  * Reads one session back for the summary screen.
  *
  * @remarks
@@ -66,13 +54,15 @@ export function createSessionSummaryReader(
     const scope = scopeSchema.parse(session.scope);
     const cards = await dependencies.readCards();
     return {
-      reviewed: countSessionReviews(dependencies.store, sessionId),
+      reviewed: dependencies.store.countSessionReviews(sessionId),
       rememberedBefore: session.rememberedBefore,
       rememberedAfter: session.rememberedAfter,
       dailyCurve: dailyCurve(
         {
           cards,
-          reviews: reviewsOf(dependencies.store.listReviewLogs()),
+          reviews: reviewsOf(
+            dependencies.store.listReviewLogsForCards(scopedCardIds(cards, scope)),
+          ),
           scope,
         },
         dependencies.now(),

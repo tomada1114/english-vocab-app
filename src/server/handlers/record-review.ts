@@ -7,7 +7,7 @@ import { afterRating } from "../../core/session";
 import { readJsonBody, type RequestHandler } from "../http";
 import {
   findSession,
-  schedulerStates,
+  schedulerStateOf,
   sessionFailure,
   type SessionDependencies,
 } from "./session-context";
@@ -52,7 +52,8 @@ export interface RecordedReview {
  * path before the body is read, so a request against a session that was never
  * opened is refused without buffering anything; the body is then read through
  * `readJsonBody`, which bounds what is buffered, and only afterwards is the
- * card looked up in the deck.
+ * one named card looked up — never the whole deck, which is what keeps this
+ * a point read on every rating.
  *
  * `requeue` is answered by asking `afterRating` — the module that owns the
  * 20-minute learn-ahead rule — what it does to a queue holding only this card,
@@ -62,7 +63,7 @@ export interface RecordedReview {
 export function createRecordReviewHandler(
   dependencies: SessionDependencies,
 ): RequestHandler {
-  const { store, readCards, now } = dependencies;
+  const { store, readCard, now } = dependencies;
 
   return async (request: Request): Promise<Response> => {
     const session = findSession(store, request);
@@ -81,17 +82,17 @@ export function createRecordReviewHandler(
     }
     const { cardId, rating } = parsed.data;
 
-    const cards = await readCards();
-    if (!cards.some((card) => card.id === cardId)) {
+    const card = await readCard(cardId);
+    if (card === undefined) {
       return sessionFailure("ERR_SESSION_CARD_NOT_FOUND");
     }
 
-    const states = schedulerStates(store);
-    if (!states.ok) {
-      return states.error;
+    const state = schedulerStateOf(store, cardId);
+    if (!state.ok) {
+      return state.error;
     }
     const nowMs = now();
-    const outcome = rate(states.value.get(cardId) ?? null, rating, nowMs);
+    const outcome = rate(state.value, rating, nowMs);
     store.recordReview({
       sessionId: session.value.id,
       cardId,

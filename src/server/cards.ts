@@ -1,6 +1,6 @@
 import "server-only";
 
-import { readdir, readFile } from "node:fs/promises";
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 
 import type { ZodType } from "zod";
@@ -9,44 +9,15 @@ import {
   cardSchema,
   purposesSchema,
   topicsSchema,
+  POS_VALUES,
   type Card,
   type Purpose,
 } from "../core/cards/card";
 import { err, ok, type Result } from "../core/result";
+import { CardLoadError } from "./card-errors";
+import { readJson } from "./card-json";
 
-/**
- * Why one file under `data/` could not be read as what it declares.
- *
- * @remarks
- * Four structurally different failures, so a caller can tell a malformed file
- * from a misfiled one. Every other card rule — an id that does not match its
- * key, an unknown topic, the text itself — is the Lint's vocabulary instead.
- */
-export type CardLoadErrorCode =
-  | "ERR_CARD_UNREADABLE"
-  | "ERR_CARD_INVALID_JSON"
-  | "ERR_CARD_SCHEMA"
-  | "ERR_CARD_ID_MISMATCH";
-
-/** One file under `data/` that could not be loaded, and why. */
-export class CardLoadError extends Error {
-  /** A literal union, not `string`: this is what a caller narrows on. */
-  readonly code: CardLoadErrorCode;
-  /** The path that failed — never the content that was at it. */
-  readonly file: string;
-
-  constructor(
-    code: CardLoadErrorCode,
-    file: string,
-    message: string,
-    options?: ErrorOptions,
-  ) {
-    super(message, options);
-    this.name = "CardLoadError";
-    this.code = code;
-    this.file = file;
-  }
-}
+export { CardLoadError, type CardLoadErrorCode } from "./card-errors";
 
 /** Every card a directory yielded, beside every file that yielded none. */
 export interface LoadedCards {
@@ -124,6 +95,42 @@ export async function loadLists(dataDirectory: string): Promise<VocabularyLists>
   };
 }
 
+// The shape `cardId(headword, pos)` produces, built from `POS_VALUES` so an
+// added part of speech stays in step; already enforced on every committed
+// file by the card Lint's `E_ID_MISMATCH`, so it excludes no real card.
+const CARD_ID_PATTERN = new RegExp(
+  `^[a-z0-9]+(?:-[a-z0-9]+)*--(?:${POS_VALUES.join("|")})$`,
+  "u",
+);
+
+/**
+ * The card `cardId` names, or `undefined` when the deck does not hold it.
+ *
+ * @remarks
+ * Reads exactly one file. Every failure — a malformed id, an unreadable or
+ * missing file, invalid JSON, a schema failure, a misfiled id — answers
+ * `undefined`, same as `loadCards` dropping that file; reasons are not
+ * returned because the one caller must not leak a path into its fixed
+ * refusal. Two independent guards run first: `cardId` must match
+ * {@link CARD_ID_PATTERN} (rejecting `.`, `/`, `\`, NUL, uppercase, empty),
+ * and the resolved parent of the target file must equal `directory`.
+ */
+export async function loadCardById(
+  directory: string,
+  cardId: string,
+): Promise<Card | undefined> {
+  if (!CARD_ID_PATTERN.test(cardId)) {
+    return undefined;
+  }
+  const name = `${cardId}.json`;
+  const file = path.join(directory, name);
+  if (path.dirname(path.resolve(file)) !== path.resolve(directory)) {
+    return undefined;
+  }
+  const loaded = await loadCard(directory, name);
+  return loaded.ok ? loaded.value : undefined;
+}
+
 /** The `.json` entries of `directory` in name order, or why it was not listed. */
 async function readCardFileNames(
   directory: string,
@@ -169,24 +176,6 @@ async function loadCard(
     );
   }
   return ok(parsed.data);
-}
-
-/** `file` parsed as JSON, or which half of that failed. */
-async function readJson(file: string): Promise<Result<unknown, CardLoadError>> {
-  let text: string;
-  try {
-    text = await readFile(file, "utf8");
-  } catch (cause) {
-    const message = "The file could not be read.";
-    return err(new CardLoadError("ERR_CARD_UNREADABLE", file, message, { cause }));
-  }
-
-  try {
-    return ok(JSON.parse(text) as unknown);
-  } catch (cause) {
-    const message = "The file is not valid JSON.";
-    return err(new CardLoadError("ERR_CARD_INVALID_JSON", file, message, { cause }));
-  }
 }
 
 /** `value` as what `schema` describes, or a {@link CardLoadError} naming `file`. */

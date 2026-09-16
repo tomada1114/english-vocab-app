@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { cardId, cardSchema } from "../src/core/cards/card";
-import { CardLoadError, loadCards, loadLists } from "../src/server/cards";
+import { CardLoadError, loadCardById, loadCards, loadLists } from "../src/server/cards";
 
 // The loader is the only reader of `data/`, so this suite drives it over real
 // directories rather than over a mocked filesystem: a fixture tree holding one
@@ -232,6 +232,80 @@ describe("loadLists when a list file is missing or malformed", () => {
     );
     const error = await rejection(loadLists(directory));
     expect(error).toMatchObject({ code: "ERR_CARD_SCHEMA" });
+  });
+});
+
+describe("loadCardById", () => {
+  it("returns the card whose file is in the directory", async () => {
+    const card = await loadCardById(fixtureCards, "mitigate--verb");
+    expect(card?.id).toBe("mitigate--verb");
+  });
+
+  it("agrees with loadCards on every card the fixture tree holds", async () => {
+    const { cards } = await loadCards(fixtureCards);
+    for (const card of cards) {
+      expect(await loadCardById(fixtureCards, card.id)).toStrictEqual(card);
+    }
+  });
+
+  it("returns undefined for an id no file answers", async () => {
+    expect(await loadCardById(fixtureCards, "no-such-card--noun")).toBeUndefined();
+  });
+
+  it("returns undefined for a file that is not valid JSON", async () => {
+    expect(await loadCardById(fixtureCards, "broken--noun")).toBeUndefined();
+  });
+
+  it("returns undefined for a file that fails the card schema", async () => {
+    expect(await loadCardById(fixtureCards, "unknown-key--noun")).toBeUndefined();
+  });
+
+  it("returns undefined for a file whose declared id is not its name", async () => {
+    expect(await loadCardById(fixtureCards, "misfiled--noun")).toBeUndefined();
+  });
+
+  it("returns undefined for a directory that does not exist", async () => {
+    const missing = path.join(temporaryDirectory(), "absent");
+    expect(await loadCardById(missing, "mitigate--verb")).toBeUndefined();
+  });
+
+  it.each([
+    ["an empty id", ""],
+    ["a parent-directory segment", "../resilience--noun"],
+    ["a deeper traversal", "../../etc/passwd"],
+    ["a nested path segment", "sub/dir--noun"],
+    ["a leading slash", "/mitigate--verb"],
+    ["a trailing extension", "mitigate--verb.json"],
+    ["uppercase letters", "Mitigate--verb"],
+    ["a part of speech the schema does not know", "mitigate--pronoun"],
+    ["a NUL byte", "mitigate--verb\0"],
+  ])("returns undefined, and does not throw, for %s", async (_case, id) => {
+    await expect(loadCardById(fixtureCards, id)).resolves.toBeUndefined();
+  });
+
+  it("still returns undefined when the traversal target is a real card file", async () => {
+    const root = temporaryDirectory();
+    const subdirectory = path.join(root, "sub");
+    mkdirSync(subdirectory);
+    writeFileSync(
+      path.join(root, "mitigate--verb.json"),
+      readFileSync(path.join(fixtureCards, "mitigate--verb.json")),
+    );
+
+    expect(await loadCardById(subdirectory, "../mitigate--verb")).toBeUndefined();
+  });
+
+  it("reads only the file it names, ignoring an unreadable file beside it", async () => {
+    const directory = temporaryDirectory();
+    writeFileSync(
+      path.join(directory, "mitigate--verb.json"),
+      readFileSync(path.join(fixtureCards, "mitigate--verb.json")),
+    );
+    mkdirSync(path.join(directory, "unreadable--noun.json"));
+
+    const card = await loadCardById(directory, "mitigate--verb");
+
+    expect(card?.id).toBe("mitigate--verb");
   });
 });
 

@@ -2,7 +2,7 @@ import "server-only";
 
 import path from "node:path";
 
-import { loadCards, loadLists, type VocabularyLists } from "./cards";
+import { loadCardById, loadCards, loadLists, type VocabularyLists } from "./cards";
 import { openDatabase } from "./db/connection";
 import { createStore } from "./db/queries";
 import { readServerEnv } from "./env";
@@ -60,11 +60,13 @@ function wire(): Wiring {
   const environment = readServerEnv({ requiresAccessKey: false });
   const store = createStore(openDatabase(environment.VOCAB_DB_PATH));
   const readCards = async () => (await loadCards(CARD_DIRECTORY)).cards;
+  const readCard = (cardId: string) => loadCardById(CARD_DIRECTORY, cardId);
   const readLists = (): Promise<VocabularyLists> => loadLists(DATA_DIRECTORY);
   const now = Date.now;
   const dependencies: SessionDependencies = {
     store,
     readCards,
+    readCard,
     now,
   };
   const readHome = createHomePageReader({ store, readCards, readLists, now });
